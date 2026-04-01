@@ -3,53 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Putra Surya Agung</title>
+    <title>Login | Putra Surya Agung</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f1f5f9; 
+        }
+        .login-container {
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
-<body class="bg-blue-50 flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white p-8 rounded-[2rem] shadow-xl flex flex-col md:flex-row w-full max-w-4xl overflow-hidden mx-4">
+    <div class="max-w-2xl w-full flex bg-white rounded-[2rem] overflow-hidden login-container min-h-[380px]">
         
-        <div class="md:w-1/2 flex flex-col items-center justify-center p-8 border-b md:border-b-0 md:border-r border-gray-100">
-            <img src="https://via.placeholder.com/150" alt="Logo PSA" class="w-32 mb-4"> <h2 class="text-2xl font-bold text-[#1e40af] tracking-wider text-center">PUTRA SURYA AGUNG</h2>
-        </div>
-
-        <div class="md:w-1/2 p-8">
-            <div class="text-center mb-8">
-                <div class="flex justify-center mb-2">
-                    <svg class="w-12 h-12 text-[#1e40af]" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+        <div class="hidden md:flex md:w-[42%] bg-gradient-to-br from-[#1e3a8a] to-[#3b82f6] p-8 flex-col justify-between text-white relative">
+            <div class="relative z-10">
+                <div class="inline-flex p-2 bg-white/20 rounded-xl backdrop-blur-md mb-4">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800">Sistem Manajemen Gudang</h3>
-                <p class="text-sm text-gray-500">Silakan masuk untuk mengelola stok</p>
+                <h1 class="text-2xl font-extrabold tracking-tight leading-tight">
+                    Putra <br> Surya Agung
+                </h1>
+                <p class="text-blue-100 mt-1 text-[9px] uppercase tracking-[0.2em] font-bold opacity-80">Inventory System</p>
             </div>
 
-            <?php 
-            if(isset($_GET['pesan'])){
-                if($_GET['pesan'] == "password_salah"){
-                    echo "<div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4 text-center text-sm font-semibold'>Password salah bos!</div>";
-                } else if($_GET['pesan'] == "user_tidak_ada"){
-                    echo "<div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4 text-center text-sm font-semibold'>Username gak ketemu!</div>";
-                }
-            }
-            ?>
+            <div class="relative z-10">
+                <p class="text-[9px] text-blue-100 font-medium italic opacity-70 leading-relaxed">
+                    "Kelola Gudang Anda dengan sistem yang cepat, akurat dan efisien."
+                </p>
+            </div>
+            
+            <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="w-full md:w-[58%] p-8 md:p-10 flex flex-col justify-center">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-slate-800 tracking-tight">Sign In</h2>
+                <p class="text-slate-500 text-[11px] mt-1">Silakan masuk ke akun Anda.</p>
+            </div>
+
+            <?php if(isset($_GET['pesan'])): ?>
+                <div class="mb-4 p-2.5 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                    <p class="text-red-700 text-[10px] font-semibold">
+                        <?php 
+                            if($_GET['pesan'] == "password_salah") echo "Password salah!";
+                            if($_GET['pesan'] == "user_tidak_ada") echo "User tidak ditemukan!";
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+
             <form action="proses_login.php" method="POST" class="space-y-4">
-                <div>
-                    <input type="text" name="username" autocomplete="off" placeholder="Email / Username" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase tracking-widest font-bold text-slate-400 ml-1">Username</label>
+                    <input type="text" name="username" placeholder="Username" required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm">
                 </div>
-                <div>
-                    <input type="password" name="password" autocomplete="off" placeholder="Password" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase tracking-widest font-bold text-slate-400 ml-1">Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm">
                 </div>
+
                 <button type="submit" 
-                    class="w-full bg-[#2d527c] text-white py-3 rounded-xl font-bold hover:bg-blue-900 transition duration-300 shadow-lg">
-                    Login
+                    class="w-full bg-[#1e3a8a] text-white py-3 rounded-xl font-bold text-[11px] shadow-lg shadow-blue-100 hover:bg-blue-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all mt-2">
+                    Masuk ke Sistem
                 </button>
             </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-slate-300 text-[8px] uppercase tracking-widest font-medium">&copy; 2026 PSA Logistic</p>
+            </div>
         </div>
     </div>
 

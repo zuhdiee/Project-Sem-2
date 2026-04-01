@@ -1,3 +1,11 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['id'])) {
+    header("Location: index.php?pesan=belum_login");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
