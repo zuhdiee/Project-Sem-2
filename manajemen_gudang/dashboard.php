@@ -1,131 +1,128 @@
-<?php
-session_start();
-
-if (!isset($_SESSION['id'])) {
-    header("Location: index.php?pesan=belum_login");
-    exit();
-}
-?>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Putra Surya Agung</title>
+    <title>Dashboard | Putra Surya Agung</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .sidebar-active { background: rgba(255, 255, 255, 0.1); border-radius: 0.75rem; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.03); }
+        
+        .gradient-area {
+            background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(241,245,249,1) 100%);
+            border: 1px solid #e2e8f0;
+        }
+    </style>
 </head>
-<body class="bg-[#e2effc] flex">
+<body class="flex h-screen overflow-hidden">
 
-    <aside class="w-64 bg-[#2d527c] min-h-screen text-white flex flex-col p-6 fixed">
-        <div class="flex items-center gap-3 mb-10">
-            <div class="bg-white p-1 rounded-md text-[#2d527c] font-bold text-xl italic">G</div>
-            <h1 class="font-bold text-lg leading-tight uppercase tracking-widest">Putra<br>Surya Agung</h1>
+    <aside class="w-72 bg-[#1e3a8a] text-white flex flex-col p-6 shrink-0 h-full justify-between z-20">
+        <div>
+            <div class="flex items-center gap-3 mb-10 px-2">
+                <div class="bg-white/20 p-2 rounded-xl">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                </div>
+                <span class="text-lg font-extrabold tracking-tight whitespace-nowrap">Putra Surya Agung</span>
+            </div>
+
+            <nav class="space-y-1.5 text-sm font-medium">
+                <a href="#" class="sidebar-active flex items-center gap-3 p-3 transition-all">
+                    <span>🏠</span> Dashboard
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-white/10 rounded-2xl transition-all opacity-70 hover:opacity-100">
+                    <span>📦</span> Data Barang
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-white/10 rounded-2xl transition-all opacity-70 hover:opacity-100">
+                    <span>⬇️</span> Barang Masuk
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-white/10 rounded-2xl transition-all opacity-70 hover:opacity-100">
+                    <span>⬆️</span> Barang Keluar
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-white/10 rounded-2xl transition-all opacity-70 hover:opacity-100">
+                    <span>📊</span> Laporan
+                </a>
+            </nav>
         </div>
 
-        <nav class="flex-1 space-y-2">
-            <a href="#" class="flex items-center gap-3 bg-[#3b82f6] p-3 rounded-lg"><img src="icon_dash.svg" class="w-5"> Dashboard</a>
-            <a href="#" class="flex items-center gap-3 hover:bg-[#345e8c] p-3 rounded-lg">Data Barang</a>
-            <a href="#" class="flex items-center gap-3 hover:bg-[#345e8c] p-3 rounded-lg">Barang Keluar</a>
-            <a href="#" class="flex items-center gap-3 hover:bg-[#345e8c] p-3 rounded-lg">Barang Masuk</a>
-            <a href="#" class="flex items-center gap-3 hover:bg-[#345e8c] p-3 rounded-lg">Kategori Barang</a>
-            <a href="#" class="flex items-center gap-3 hover:bg-[#345e8c] p-3 rounded-lg">Laporan</a>
-        </nav>
-
-        <button class="mt-auto w-full bg-[#3b82f6] py-3 rounded-2xl font-bold hover:bg-blue-600 transition">Logout</button>
+        <a href="logout.php" class="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white p-3 rounded-2xl text-center text-xs font-bold transition-all border border-red-500/20 mb-4">
+            Logout
+        </a>
     </aside>
 
-    <main class="flex-1 ml-64 p-8">
+    <div class="flex-1 flex flex-col min-w-0 h-full">
         
-        <div class="flex justify-between items-center mb-8">
-            <div class="relative w-1/2">
-                <input type="text" placeholder="Search..." class="w-full bg-[#d7e6f5] px-10 py-3 rounded-xl focus:outline-none">
-                <svg class="w-5 h-5 absolute left-3 top-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="text-gray-700 font-medium">Halo, <?php echo $_SESSION['nama'];?>!</span>
-                <div class="w-10 h-10 bg-[#2d527c] rounded-full border-2 border-white"></div>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-bold text-[#2d527c]">Dashboard</h2>
-            <div class="flex gap-3">
-                <button class="bg-[#48a183] text-white px-4 py-2 rounded-xl flex items-center gap-2"><span>+</span> tambah barang</button>
-                <button class="bg-[#3b82f6] text-white px-4 py-2 rounded-xl">Input Barang Masuk</button>
-                <button class="bg-[#f2994a] text-white px-4 py-2 rounded-xl">Input Barang Keluar</button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-4 gap-6 mb-8">
-            <div class="col-span-3 bg-white p-6 rounded-3xl flex justify-around items-center shadow-sm">
-                <div class="text-center">
-                    <p class="text-gray-400 text-sm font-semibold">Total Barang</p>
-                    <h3 class="text-3xl font-bold">1250</h3>
-                </div>
-                <div class="text-center">
-                    <p class="text-gray-400 text-sm font-semibold">Barang Masuk</p>
-                    <h3 class="text-3xl font-bold">500</h3>
-                </div>
-                <div class="text-center">
-                    <p class="text-gray-400 text-sm font-semibold">Barang Keluar</p>
-                    <h3 class="text-3xl font-bold">300</h3>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-3xl flex items-center gap-4 border-l-8 border-yellow-400 shadow-sm">
-                <span class="text-4xl">⚠️</span>
+        <main class="flex-1 overflow-y-auto p-8">
+            <header class="flex justify-between items-center mb-8">
                 <div>
-                    <h4 class="text-[#2d527c] font-bold">Stok hampir habis</h4>
-                    <p class="text-gray-500 font-semibold text-sm">10 Item</p>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Ringkasan Gudang</h1>
+                    <p class="text-slate-400 text-sm">Selamat datang kembali, <span class="font-semibold text-blue-600">Admin!</span></p>
+                </div>
+                <div class="flex gap-2.5">
+                    <button class="bg-[#1e3a8a] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-100 hover:scale-105 transition-all">+ Tambah Barang</button>
+                    <button class="bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-50 hover:scale-105 transition-all">Input Masuk</button>
+                </div>
+            </header>
+
+            <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card p-6 border-l-4 border-blue-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Barang</p>
+                    <h3 class="text-2xl font-extrabold text-slate-800">1.250 <span class="text-xs font-normal text-slate-400 ml-1">Pcs</span></h3>
+                </div>
+                <div class="glass-card p-6 border-l-4 border-emerald-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Barang Masuk</p>
+                    <h3 class="text-2xl font-extrabold text-slate-800">500</h3>
+                </div>
+                <div class="glass-card p-6 border-l-4 border-orange-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Barang Keluar</p>
+                    <h3 class="text-2xl font-extrabold text-slate-800">300</h3>
+                </div>
+                <div class="glass-card p-6 bg-orange-50 border border-orange-200">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-orange-500 text-sm">⚠️</span>
+                        <p class="text-orange-700 text-xs font-bold uppercase tracking-wider">Stok Tipis</p>
+                    </div>
+                    <h3 class="text-2xl font-extrabold text-orange-800">10 <span class="text-xs font-normal opacity-70">Item</span></h3>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-4">
+                <div class="lg:col-span-2 glass-card p-6 gradient-area">
+                    <h4 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <span class="w-1.5 h-4 bg-blue-500 rounded-full"></span> Tren Penjualan
+                    </h4>
+                    <div class="h-64 bg-slate-50 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center italic text-slate-400 text-xs">
+                        [ Area Grafik Terintegrasi ]
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 gradient-area">
+                    <h4 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <span class="w-1.5 h-4 bg-orange-500 rounded-full"></span> Aktivitas Terbaru
+                    </h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Mie Goreng</p>
+                                <p class="text-[10px] text-slate-400">29-01-2026 • 2 Dus</p>
+                            </div>
+                            <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg">Restock</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
 
-        <div class="grid grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-3xl shadow-sm">
-                <h4 class="font-bold text-[#2d527c] mb-4">Grafik Penjualan</h4>
-                <canvas id="myChart" height="200"></canvas>
+        <footer class="h-12 bg-white shrink-0 border-t border-slate-100 flex items-center justify-between px-8 text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+            <p>&copy; 2026 Putra Surya Agung Logistic System</p>
+            <div class="flex gap-2 items-center">
+                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                <span>System Status: Online</span>
             </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm">
-                <h4 class="font-bold text-[#2d527c] mb-4">Riwayat Aktivitas</h4>
-                <table class="w-full text-left text-sm">
-                    <thead>
-                        <tr class="bg-[#2d527c] text-white">
-                            <th class="p-2 first:rounded-l-lg">Tanggal</th>
-                            <th class="p-2">Nama Barang</th>
-                            <th class="p-2">Jumlah</th>
-                            <th class="p-2 last:rounded-r-lg">Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        <tr class="text-gray-600">
-                            <td class="py-3">29-01-2026</td>
-                            <td class="py-3 font-semibold">Mie Goreng</td>
-                            <td class="py-3">2 Dus</td>
-                            <td class="py-3"><span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs">Re-Stocked</span></td>
-                        </tr>
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
+        </footer>
+    </div>
 
-    <script>
-        const ctx = document.getElementById('myChart');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
-                datasets: [{
-                    label: 'Penjualan',
-                    data: [12, 19, 3, 5, 2, 3],
-                    backgroundColor: ['#ef4444', '#3b82f6', '#ef4444', '#3b82f6', '#ef4444', '#3b82f6'],
-                    borderRadius: 5
-                }]
-            }
-        });
-    </script>
 </body>
 </html>
