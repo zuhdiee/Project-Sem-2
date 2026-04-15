@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Putra Surya Agung</title>
+    <title>Kategori Barang | Putra Surya Agung</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -14,7 +14,6 @@
             font-size: 13px;
         }
         
-        /* Sidebar Styling */
         .sidebar { background: white; border-right: 1px solid #e2e8f0; }
         
         .nav-link {
@@ -47,18 +46,33 @@
             margin: 24px 0 10px 16px;
         }
 
-        /* Content Cards - Pertegas Warna & Shadow */
-        .modern-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07);
-            border: 1px solid #cbd5e1; 
+        /* Category Card Style */
+        .category-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.05);
+            border-color: #2563eb;
+        }
+
+        .icon-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -78,21 +92,17 @@
 
         <nav class="flex-1 overflow-y-auto pr-2">
             <div class="nav-label">Utama</div>
-            <a href="dashboard.php" class="nav-link nav-active">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                </svg>
+            <a href="dashboard.php" class="nav-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 Dashboard
             </a>
 
             <div class="nav-label">Manajemen Stok</div>
             <a href="data_barang.php" class="nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3zM9 5v4m6-4v4M4 11h16"/>
-                </svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                 Data Barang
             </a>
-            <a href="kategori_barang.php" class="nav-link">
+            <a href="kategori_barang.php" class="nav-link nav-active">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
@@ -128,7 +138,7 @@
         <header class="h-16 flex items-center justify-between px-8 shrink-0 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200">
             <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg w-80 border border-slate-200">
                 <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
-                <input type="text" placeholder="Cari data stok..." class="bg-transparent border-none outline-none text-[11px] w-full text-slate-600">
+                <input type="text" placeholder="Cari kategori..." class="bg-transparent border-none outline-none text-[11px] w-full text-slate-600">
             </div>
             
             <div class="flex items-center gap-3">
@@ -141,79 +151,66 @@
         </header>
 
         <div class="p-8">
-            <div class="flex justify-between items-start mb-6">
+            <div class="flex justify-between items-start mb-10">
                 <div>
-                    <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Ringkasan Gudang</h1>
-                    <p class="text-slate-500 text-[11px]">Memantau pergerakan stok secara real-time.</p>
+                    <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Kategori Barang</h1>
+                    <p class="text-slate-500 text-[11px]">Kelola kategori barang gudang secara terorganisir.</p>
                 </div>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Tambah Barang Baru
+                <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-emerald-100 flex items-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5"/></svg>
+                    Tambah Kategori
                 </button>
             </div>
 
-            <div class="grid grid-cols-4 gap-5 mb-8">
-                <div class="modern-card p-5 border-l-4 border-l-blue-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Stok</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">1.250 <span class="text-[10px] font-normal text-slate-400 ml-1">Pcs</span></h3>
-                </div>
-                <div class="modern-card p-5 border-l-4 border-l-emerald-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Barang Masuk</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">500</h3>
-                </div>
-                <div class="modern-card p-5 border-l-4 border-l-orange-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Barang Keluar</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">300</h3>
-                </div>
-                <div class="modern-card p-5 border-l-4 border-l-rose-600">
-                    <p class="text-[10px] font-bold text-rose-600 uppercase mb-1">Stok Tipis</p>
-                    <h3 class="text-xl font-extrabold text-rose-700">10 <span class="text-[10px] font-normal text-slate-400 ml-1">Item</span></h3>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-6">
-                <div class="col-span-2 modern-card p-6 h-[380px] flex flex-col">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="font-bold text-slate-800 text-[13px]">Tren Penjualan Bulanan</h4>
-                        <div class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">6 Bulan Terakhir</div>
-                    </div>
-                    <div class="flex-1 w-full bg-slate-50/50 rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400 italic text-[11px]">
-                        [ Area Grafik Terintegrasi ]
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div class="category-card">
+                    <div class="icon-box bg-orange-100 text-orange-500">📦</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Dus</h3>
+                        <p class="text-slate-400 text-[11px] font-medium">124 barang</p>
                     </div>
                 </div>
 
-                <div class="modern-card p-6 h-[380px] flex flex-col">
-                    <h4 class="font-bold text-slate-800 text-[13px] mb-5">Aktivitas Terbaru</h4>
-                    <div class="flex-1 overflow-y-auto space-y-4 pr-1">
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition border-b border-slate-50 pb-3">
-                            <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            </div>
-                            <div>
-                                <p class="text-[11px] font-bold text-slate-800">Restock Mie Goreng</p>
-                                <p class="text-[9px] text-slate-400">29-01-2026 • +2 Dus</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition border-b border-slate-50 pb-3">
-                            <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                            </div>
-                            <div>
-                                <p class="text-[11px] font-bold text-slate-800">Keluar Minyak Kita</p>
-                                <p class="text-[9px] text-slate-400">28-01-2026 • -5 Dus</p>
-                            </div>
-                        </div>
+                <div class="category-card">
+                    <div class="icon-box bg-emerald-100 text-emerald-500">🍬</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Renceng</h3>
+                        <p class="text-slate-400 text-[11px] font-medium">124 barang</p>
                     </div>
-                    <button class="mt-4 text-[10px] font-bold text-blue-600 hover:text-blue-800 w-full text-center transition">Lihat Semua Riwayat</button>
                 </div>
+
+                <div class="category-card">
+                    <div class="icon-box bg-blue-100 text-blue-500">🥤</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Lusin</h3>
+                        <p class="text-slate-400 text-[11px] font-medium">124 barang</p>
+                    </div>
+                </div>
+
+                <div class="category-card bg-slate-50/50 border-dashed border-slate-300 shadow-none">
+                    <div class="icon-box bg-slate-200"></div>
+                    <div class="w-24 h-4 bg-slate-200 rounded-md"></div>
+                </div>
+
+                <div class="category-card bg-slate-50/50 border-dashed border-slate-300 shadow-none">
+                    <div class="icon-box bg-slate-200"></div>
+                    <div class="w-24 h-4 bg-slate-200 rounded-md"></div>
+                </div>
+
+                <div class="category-card bg-slate-50/50 border-dashed border-slate-300 shadow-none">
+                    <div class="icon-box bg-slate-200"></div>
+                    <div class="w-24 h-4 bg-slate-200 rounded-md"></div>
+                </div>
+
             </div>
         </div>
 
-        <footer class="mt-auto py-4 px-8 border-t border-slate-200 text-[10px] font-bold text-slate-400 flex justify-between bg-white/50 backdrop-blur-sm">
+        <footer class="mt-auto py-4 px-8 border-t border-slate-200 text-[10px] font-bold text-slate-400 flex justify-between bg-white/50">
             <span>&copy; 2026 PSA LOGISTIC SYSTEM</span>
             <div class="flex items-center gap-2">
                 <span class="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                <span class="tracking-widest">SYSTEM ONLINE</span>
+                <span class="tracking-widest uppercase">Server Online</span>
             </div>
         </footer>
     </main>
