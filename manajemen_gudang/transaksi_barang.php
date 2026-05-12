@@ -1,6 +1,9 @@
 <?php
-session_start();
-include 'koneksi.php'; // $conn MySQLi
+// Pastikan session_start hanya dipanggil SEKALI
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include 'koneksi.php';
 
 if (!isset($_SESSION['id'])) {
     header("Location: login.php");
@@ -10,6 +13,11 @@ if (!isset($_SESSION['id'])) {
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
+// ── Fetch kategori (untuk form tambah barang baru) ───────────
+$kategori_list = [];
+$res_kat = $conn->query("SELECT id_kategori, nama_kategori FROM kategori ORDER BY nama_kategori ASC");
+if ($res_kat) while ($row = $res_kat->fetch_assoc()) $kategori_list[] = $row;
 
 // ── Fetch barang (join kategori) ──────────────────────────────
 $barang_list = [];
@@ -34,6 +42,7 @@ $where = $filter_jenis !== 'all' ? "WHERE ts.jenis='" . $conn->real_escape_strin
 
 $riwayat = $conn->query("
     SELECT ts.id_transaksi, ts.created_at, ts.jenis, ts.jumlah,
+           ts.supplier, ts.no_struk, ts.keterangan,
            b.nama_barang, b.merek, b.satuan,
            u.nama_lengkap
     FROM transaksi_stok ts
@@ -59,13 +68,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#334155
 .nav-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin:24px 0 10px 16px}
 .content-card{background:white;border-radius:20px;border:1px solid #e2e8f0;padding:24px}
 
-/* Tab buttons inside modal */
 .tab-btn{flex:1;padding:10px 16px;font-size:12px;font-weight:700;border-radius:10px;border:none;cursor:pointer;transition:all 0.25s}
 .tab-masuk.active {background:#2563eb;color:white;box-shadow:0 4px 14px rgba(37,99,235,0.3)}
 .tab-keluar.active{background:#f43f5e;color:white;box-shadow:0 4px 14px rgba(244,63,94,0.3)}
 .tab-btn:not(.active){background:rgba(255,255,255,0.18);color:rgba(255,255,255,0.75)}
 
-/* Modal */
 .modal-overlay{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,0.5);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal-box{background:white;border-radius:24px;width:100%;max-width:580px;margin:16px;box-shadow:0 30px 70px rgba(0,0,0,0.2);transform:translateY(28px) scale(0.97);transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden}
@@ -73,39 +80,32 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#334155
 .modal-header-masuk {background:linear-gradient(135deg,#2563eb,#1d4ed8)}
 .modal-header-keluar{background:linear-gradient(135deg,#f43f5e,#e11d48)}
 
-/* Inputs */
 .input-field{width:100%;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:12px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;color:#334155;transition:all 0.2s}
 .input-field-masuk:focus {border-color:#2563eb;background:white;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
 .input-field-keluar:focus{border-color:#f43f5e;background:white;box-shadow:0 0 0 3px rgba(244,63,94,0.1)}
 label{display:block;font-size:11px;font-weight:600;color:#64748b;margin-bottom:5px}
 
-/* Badges */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700}
 .badge-masuk {background:#dbeafe;color:#1d4ed8}
 .badge-keluar{background:#ffe4e6;color:#be123c}
 
-/* Table */
 thead tr th{padding-bottom:14px;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;border-bottom:1px solid #f1f5f9}
 tbody tr{border-bottom:1px solid #f8fafc;transition:background 0.15s}
 tbody tr:hover{background:#f8fafc}
 tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:middle}
 
-/* Filter tabs */
 .filter-tab{padding:6px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid transparent;cursor:pointer;transition:all 0.2s;background:#f8fafc;color:#94a3b8;text-decoration:none}
 .filter-tab.f-all   {background:#1e293b;color:white}
 .filter-tab.f-masuk {background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
 .filter-tab.f-keluar{background:#ffe4e6;color:#be123c;border-color:#fecdd3}
 
-/* Stat card */
 .stat-card{border-radius:16px;padding:20px 22px;background:white;border:1px solid #e2e8f0}
 
-/* Barang info panel */
 .info-panel{margin-top:8px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:11px}
 .stok-ok  {color:#059669;font-weight:700}
 .stok-low {color:#f59e0b;font-weight:700}
 .stok-danger{color:#e11d48;font-weight:700}
 
-/* Flash */
 .flash-ok {background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;border-radius:12px;padding:12px 16px;font-size:12px;font-weight:600;margin-bottom:16px}
 .flash-err{background:#ffe4e6;border:1px solid #fecdd3;color:#9f1239;border-radius:12px;padding:12px 16px;font-size:12px;font-weight:600;margin-bottom:16px}
 </style>
@@ -123,7 +123,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
     <div class="flash-ok">✓ <?= htmlspecialchars($flash_success) ?></div>
     <?php endif; ?>
     <?php if ($flash_error): ?>
-    <div class="flash-err">✕ <?= $flash_error ?></div>
+    <div class="flash-err">✕ <?= htmlspecialchars($flash_error) ?></div>
     <?php endif; ?>
 
     <!-- Page Header -->
@@ -133,6 +133,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             <p class="text-slate-400 text-[11px] mt-0.5">Kelola barang masuk dan keluar gudang dalam satu tempat.</p>
         </div>
         <div class="flex gap-2">
+            
             <button onclick="openModal('masuk')"
                 class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -146,7 +147,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
         </div>
     </div>
 
-    
     <!-- Riwayat -->
     <div class="content-card">
         <div class="flex items-center justify-between mb-5">
@@ -171,7 +171,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                         <th>Merek</th>
                         <th>Jenis</th>
                         <th>Jumlah</th>
-                        <th>No. Faktur</th>
                         <th>Supplier / Penerima</th>
                         <th>Keterangan</th>
                         <th>Petugas</th>
@@ -200,15 +199,14 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                             <?= $row['jenis']==='masuk' ? '+' : '-' ?><?= number_format($row['jumlah'], 0) ?>
                             <span class="text-[10px] font-normal text-slate-400"><?= $row['satuan'] ?></span>
                         </td>
-                        <td class="text-slate-500"><?= htmlspecialchars($row['no_faktur'] ?? '-') ?></td>
-                        <td><?= htmlspecialchars($row['pihak_terkait'] ?? '-') ?></td>
+                        <td><?= htmlspecialchars($row['supplier'] ?? '-') ?></td>
                         <td class="text-slate-400 max-w-[120px] truncate"><?= htmlspecialchars($row['keterangan'] ?? '-') ?></td>
                         <td class="text-slate-500"><?= htmlspecialchars($row['nama_lengkap']) ?></td>
                     </tr>
                     <?php endwhile;
                 else: ?>
                     <tr>
-                        <td colspan="10" class="py-14 text-center text-slate-400 italic text-[12px]">
+                        <td colspan="9" class="py-14 text-center text-slate-400 italic text-[12px]">
                             Belum ada transaksi<?= $filter_jenis !== 'all' ? ' '.$filter_jenis : '' ?> yang tercatat.
                         </td>
                     </tr>
@@ -224,10 +222,10 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <!-- ===== MODAL ===== -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
-<div class="modal-box">
+<div class="modal-box" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
 
-    <!-- Header dinamis -->
-    <div class="modal-header-masuk p-6 pb-4" id="modal-header">
+    <!-- Header Modal -->
+    <div class="modal-header-masuk p-6 pb-4 flex-shrink-0" id="modal-header">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <div class="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-0.5">Input Transaksi</div>
@@ -240,173 +238,365 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 </svg>
             </button>
         </div>
+        <!-- Tab Masuk / Keluar -->
         <div class="flex gap-2 p-1 bg-white/15 rounded-xl">
             <button class="tab-btn tab-masuk active"  id="tab-masuk"  onclick="switchTab('masuk')">↑ Barang Masuk</button>
             <button class="tab-btn tab-keluar"        id="tab-keluar" onclick="switchTab('keluar')">↓ Barang Keluar</button>
         </div>
     </div>
 
-    <!-- Form -->
-    <form method="POST" action="proses_transaksi.php" class="p-6 space-y-4">
-        <input type="hidden" name="jenis" id="input-jenis" value="masuk">
+    <!-- Scrollable body -->
+    <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling:touch;">
 
-        <!-- Tanggal + No. Faktur -->
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label>Tanggal Transaksi</label>
-                <input type="date" name="tanggal" id="input-date" class="input-field input-field-masuk" required>
-            </div>
-            <div>
-                <label>No. Faktur / Surat Jalan</label>
-                <input type="text" name="no_faktur" id="input-faktur"
-                       class="input-field input-field-masuk" placeholder="Contoh: IN-001" required>
-            </div>
-        </div>
+        <!-- ══════════════════════════════════════════
+             PANEL MASUK
+        ═══════════════════════════════════════════ -->
+        <div id="panel-masuk">
 
-        <!-- Pilih Barang -->
-        <div>
-            <label>Pilih Barang</label>
-            <select name="id_barang" id="input-barang" class="input-field input-field-masuk" required
-                    onchange="updateBarangInfo(this)">
-                <option value="">-- Pilih Barang --</option>
-                <?php foreach ($barang_list as $b): ?>
-                <option value="<?= $b['id_barang'] ?>"
-                        data-stok="<?= $b['stok'] ?>"
-                        data-stok-min="<?= $b['stok_min'] ?>"
-                        data-satuan="<?= $b['satuan'] ?>"
-                        data-merek="<?= htmlspecialchars($b['merek'] ?? '') ?>"
-                        data-kategori="<?= htmlspecialchars($b['nama_kategori'] ?? '') ?>">
-                    <?= htmlspecialchars($b['nama_barang']) ?>
-                    <?php if ($b['merek']): ?>(<?= htmlspecialchars($b['merek']) ?>)<?php endif; ?>
-                    — Stok: <?= number_format($b['stok'], 0) ?> <?= $b['satuan'] ?>
-                </option>
-                <?php endforeach; ?>
-            </select>
-
-            <!-- Info stok panel -->
-            <div id="barang-info" class="info-panel hidden">
-                <div class="flex justify-between mb-1">
-                    <span class="text-slate-500">Stok saat ini</span>
-                    <span id="info-stok" class="stok-ok">—</span>
-                </div>
-                <div class="flex justify-between mb-1">
-                    <span class="text-slate-500">Stok minimum</span>
-                    <span id="info-stok-min" class="text-slate-600">—</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">Kategori</span>
-                    <span id="info-kategori" class="text-slate-600">—</span>
+            <!-- Toggle: Barang Lama / Barang Baru -->
+            <div class="px-6 pt-5 pb-2">
+                <div class="flex gap-1 p-1 bg-slate-100 rounded-xl">
+                    <button id="toggle-lama"
+                        onclick="switchMasukMode('lama')"
+                        class="flex-1 py-2 text-[11px] font-bold rounded-lg transition-all bg-white text-blue-700 shadow-sm">
+                        📦 Stok Barang Ada
+                    </button>
+                    <button id="toggle-baru"
+                        onclick="switchMasukMode('baru')"
+                        class="flex-1 py-2 text-[11px] font-bold rounded-lg transition-all text-slate-500">
+                        ✨ Tambah Barang Baru
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Jumlah + Pihak -->
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label>Jumlah <span id="satuan-hint" class="text-slate-400 font-normal text-[10px]"></span></label>
-                <input type="number" name="jumlah" id="input-jumlah"
-                       step="0.01" min="0.01"
-                       class="input-field input-field-masuk" placeholder="0" required>
-            </div>
-            <div>
-                <label id="label-pihak">Nama Supplier</label>
-                <input type="text" name="pihak_terkait" id="input-pihak"
-                       class="input-field input-field-masuk" placeholder="Nama supplier..." required>
-            </div>
-        </div>
+            <!-- FORM: Barang Lama (restock) -->
+            <form id="form-lama" method="POST" action="proses_transaksi.php" class="p-6 pt-3 space-y-4">
+                <input type="hidden" name="jenis" value="masuk">
 
-        <!-- Keterangan -->
-        <div>
-            <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
-            <textarea name="keterangan" rows="2" class="input-field input-field-masuk resize-none"
-                      placeholder="Catatan tambahan..."></textarea>
-        </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Tanggal Transaksi</label>
+                        <input type="date" name="tanggal" id="input-date-lama" class="input-field input-field-masuk" required>
+                    </div>
+                    <div>
+                        <label>Nama Supplier</label>
+                        <input type="text" name="pihak_terkait" class="input-field input-field-masuk" placeholder="Nama supplier..." required>
+                    </div>
+                </div>
 
-        <!-- Submit -->
-        <button type="submit" id="submit-btn"
-                class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
-                style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
-            Simpan Transaksi Masuk
-        </button>
-    </form>
+                <div>
+                    <label>Pilih Barang</label>
+                    <select name="id_barang" id="input-barang" class="input-field input-field-masuk" required
+                            onchange="updateBarangInfo(this)">
+                        <option value="">-- Pilih Barang --</option>
+                        <?php foreach ($barang_list as $b): ?>
+                        <option value="<?= $b['id_barang'] ?>"
+                                data-stok="<?= $b['stok'] ?>"
+                                data-stok-min="<?= $b['stok_min'] ?>"
+                                data-satuan="<?= $b['satuan'] ?>"
+                                data-merek="<?= htmlspecialchars($b['merek'] ?? '') ?>"
+                                data-kategori="<?= htmlspecialchars($b['nama_kategori'] ?? '') ?>">
+                            <?= htmlspecialchars($b['nama_barang']) ?>
+                            <?php if ($b['merek']): ?>(<?= htmlspecialchars($b['merek']) ?>)<?php endif; ?>
+                            — Stok: <?= number_format($b['stok'], 0) ?> <?= $b['satuan'] ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div id="barang-info" class="info-panel hidden">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-slate-500">Stok saat ini</span>
+                            <span id="info-stok" class="stok-ok">—</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-slate-500">Stok minimum</span>
+                            <span id="info-stok-min" class="text-slate-600">—</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Kategori</span>
+                            <span id="info-kategori" class="text-slate-600">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Jumlah <span id="satuan-hint" class="text-slate-400 font-normal text-[10px]"></span></label>
+                        <input type="number" name="jumlah" step="0.01" min="0.01"
+                               class="input-field input-field-masuk" placeholder="0" required>
+                    </div>
+                    <div>
+                        <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
+                        <input type="text" name="keterangan" class="input-field input-field-masuk" placeholder="Catatan...">
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
+                        style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
+                    Simpan Transaksi Masuk
+                </button>
+            </form>
+
+            <!-- FORM: Barang Baru -->
+            <form id="form-baru" method="POST" action="proses/tambah_barang.php" class="p-6 pt-3 space-y-4 hidden">
+
+                <!-- Nama Barang -->
+                <div>
+                    <label>Nama Barang *</label>
+                    <input type="text" name="nama_barang" id="nb_nama"
+                           class="input-field input-field-masuk" placeholder="Nama barang..." required>
+                </div>
+
+                <!-- Merek + Kategori -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Merek</label>
+                        <input type="text" name="merek" class="input-field input-field-masuk" placeholder="Merek...">
+                    </div>
+                    <div>
+                        <label>Kategori *</label>
+                        <select name="id_kategori" id="nb_kategori" class="input-field input-field-masuk" required>
+                            <option value="" disabled selected>Pilih kategori…</option>
+                            <?php foreach ($kategori_list as $kat): ?>
+                            <option value="<?= $kat['id_kategori'] ?>"><?= htmlspecialchars($kat['nama_kategori']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Stok + Stok Min + Satuan -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label>Stok Awal</label>
+                        <input type="number" name="stok" value="0" min="0"
+                               class="input-field input-field-masuk" placeholder="0">
+                    </div>
+                    <div>
+                        <label>Stok Min</label>
+                        <input type="number" name="stok_min" value="10" min="0"
+                               class="input-field input-field-masuk" placeholder="10">
+                    </div>
+                    <div>
+                        <label>Satuan *</label>
+                        <select name="satuan" id="nb_satuan" class="input-field input-field-masuk" required>
+                            <option value="pcs">Pcs</option>
+                            <option value="kg">Kg</option>
+                            <option value="dus">Dus</option>
+                            <option value="liter">Liter</option>
+                            <option value="sak">Sak</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Harga Beli + Harga Jual -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Harga Beli</label>
+                        <input type="number" name="harga_beli" min="0"
+                               class="input-field input-field-masuk" placeholder="0">
+                    </div>
+                    <div>
+                        <label>Harga Jual</label>
+                        <input type="number" name="harga_jual" min="0"
+                               class="input-field input-field-masuk" placeholder="0">
+                    </div>
+                </div>
+
+                <!-- Supplier + Keterangan -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Supplier / Sumber</label>
+                        <input type="text" name="supplier" value="Stok Awal"
+                               class="input-field input-field-masuk" placeholder="Stok Awal">
+                    </div>
+                    <div>
+                        <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
+                        <input type="text" name="keterangan" class="input-field input-field-masuk" placeholder="Catatan...">
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
+                        style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
+                    ✨ Simpan Barang Baru
+                </button>
+            </form>
+
+        </div><!-- /panel-masuk -->
+
+        <!-- ══════════════════════════════════════════
+             PANEL KELUAR
+        ═══════════════════════════════════════════ -->
+        <div id="panel-keluar" class="hidden">
+            <form method="POST" action="proses_transaksi.php" class="p-6 space-y-4">
+                <input type="hidden" name="jenis" value="keluar">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Tanggal Transaksi</label>
+                        <input type="date" name="tanggal" id="input-date-keluar" class="input-field input-field-keluar" required>
+                    </div>
+                    <div>
+                        <label>Penerima / Customer</label>
+                        <input type="text" name="pihak_terkait" class="input-field input-field-keluar" placeholder="Nama penerima..." required>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Pilih Barang</label>
+                    <select name="id_barang" id="input-barang-keluar" class="input-field input-field-keluar" required
+                            onchange="updateBarangInfoKeluar(this)">
+                        <option value="">-- Pilih Barang --</option>
+                        <?php foreach ($barang_list as $b): ?>
+                        <option value="<?= $b['id_barang'] ?>"
+                                data-stok="<?= $b['stok'] ?>"
+                                data-stok-min="<?= $b['stok_min'] ?>"
+                                data-satuan="<?= $b['satuan'] ?>"
+                                data-kategori="<?= htmlspecialchars($b['nama_kategori'] ?? '') ?>">
+                            <?= htmlspecialchars($b['nama_barang']) ?>
+                            <?php if ($b['merek']): ?>(<?= htmlspecialchars($b['merek']) ?>)<?php endif; ?>
+                            — Stok: <?= number_format($b['stok'], 0) ?> <?= $b['satuan'] ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div id="barang-info-keluar" class="info-panel hidden">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-slate-500">Stok saat ini</span>
+                            <span id="info-stok-keluar" class="stok-ok">—</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Kategori</span>
+                            <span id="info-kategori-keluar" class="text-slate-600">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Jumlah <span id="satuan-hint-keluar" class="text-slate-400 font-normal text-[10px]"></span></label>
+                        <input type="number" name="jumlah" step="0.01" min="0.01"
+                               class="input-field input-field-keluar" placeholder="0" required>
+                    </div>
+                    <div>
+                        <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
+                        <input type="text" name="keterangan" class="input-field input-field-keluar" placeholder="Catatan...">
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
+                        style="background:#f43f5e;box-shadow:0 4px 14px rgba(244,63,94,0.3)">
+                    Simpan Transaksi Keluar
+                </button>
+            </form>
+        </div><!-- /panel-keluar -->
+
+    </div><!-- /scrollable body -->
 </div>
 </div>
 
 <script>
 const barangData = <?= json_encode(array_column($barang_list, null, 'id_barang')) ?>;
 
-function openModal(jenis='masuk'){
+// ── Modal open/close ──────────────────────────────────────────────
+function openModal(jenis = 'masuk') {
     document.getElementById('modal-overlay').classList.add('open');
-    document.body.style.overflow='hidden';
+    document.body.style.overflow = 'hidden';
     switchTab(jenis);
-    document.getElementById('input-date').valueAsDate = new Date();
+    // Set tanggal hari ini
+    const today = new Date().toISOString().split('T')[0];
+    const dl = document.getElementById('input-date-lama');
+    const dk = document.getElementById('input-date-keluar');
+    if (dl) dl.value = today;
+    if (dk) dk.value = today;
 }
-function closeModal(){
+function closeModal() {
     document.getElementById('modal-overlay').classList.remove('open');
-    document.body.style.overflow='';
+    document.body.style.overflow = '';
 }
-function closeModalOnBg(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+function closeModalOnBg(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
 
-function switchTab(jenis){
-    const isMasuk = jenis==='masuk';
-    document.getElementById('input-jenis').value = jenis;
+// ── Switch tab Masuk / Keluar ────────────────────────────────────
+function switchTab(jenis) {
+    const isMasuk = jenis === 'masuk';
 
     const hdr = document.getElementById('modal-header');
-    hdr.className = (isMasuk ? 'modal-header-masuk' : 'modal-header-keluar') + ' p-6 pb-4';
+    hdr.className = (isMasuk ? 'modal-header-masuk' : 'modal-header-keluar') + ' p-6 pb-4 flex-shrink-0';
     document.getElementById('modal-title').textContent = isMasuk ? 'Barang Masuk' : 'Barang Keluar';
 
-    document.getElementById('tab-masuk').className  = 'tab-btn tab-masuk'  + (isMasuk  ? ' active':'');
-    document.getElementById('tab-keluar').className = 'tab-btn tab-keluar' + (!isMasuk ? ' active':'');
+    document.getElementById('tab-masuk').className  = 'tab-btn tab-masuk'  + (isMasuk  ? ' active' : '');
+    document.getElementById('tab-keluar').className = 'tab-btn tab-keluar' + (!isMasuk ? ' active' : '');
 
-    document.querySelectorAll('.input-field').forEach(el=>{
-        el.classList.remove('input-field-masuk','input-field-keluar');
-        el.classList.add(isMasuk ? 'input-field-masuk':'input-field-keluar');
-    });
-
-    const btn = document.getElementById('submit-btn');
-    btn.style.background = isMasuk ? '#2563eb' : '#f43f5e';
-    btn.style.boxShadow  = isMasuk ? '0 4px 14px rgba(37,99,235,0.3)' : '0 4px 14px rgba(244,63,94,0.3)';
-    btn.textContent      = isMasuk ? 'Simpan Transaksi Masuk' : 'Simpan Transaksi Keluar';
-
-    document.getElementById('label-pihak').textContent  = isMasuk ? 'Nama Supplier'       : 'Penerima / Customer';
-    document.getElementById('input-pihak').placeholder  = isMasuk ? 'Nama supplier...'    : 'Nama penerima...';
-    document.getElementById('input-faktur').placeholder = isMasuk ? 'Contoh: IN-001'      : 'Contoh: OUT-001';
-
-    // Re-render info stok sesuai jenis baru
-    const sel = document.getElementById('input-barang');
-    if(sel.value) updateBarangInfo(sel);
+    document.getElementById('panel-masuk').classList.toggle('hidden', !isMasuk);
+    document.getElementById('panel-keluar').classList.toggle('hidden', isMasuk);
 }
 
-function updateBarangInfo(sel){
+// ── Toggle Barang Lama / Barang Baru (hanya di panel Masuk) ─────
+function switchMasukMode(mode) {
+    const isLama = mode === 'lama';
+    document.getElementById('form-lama').classList.toggle('hidden', !isLama);
+    document.getElementById('form-baru').classList.toggle('hidden', isLama);
+
+    const btnLama = document.getElementById('toggle-lama');
+    const btnBaru = document.getElementById('toggle-baru');
+
+    if (isLama) {
+        btnLama.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all bg-white text-blue-700 shadow-sm';
+        btnBaru.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all text-slate-500';
+    } else {
+        btnLama.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all text-slate-500';
+        btnBaru.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all bg-white text-blue-700 shadow-sm';
+    }
+}
+
+// ── Info barang untuk panel Masuk (barang lama) ──────────────────
+function updateBarangInfo(sel) {
     const id   = sel.value;
     const info = document.getElementById('barang-info');
-    if(!id || !barangData[id]){ info.classList.add('hidden'); return; }
+    if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
 
-    const b      = barangData[id];
-    const stok   = parseFloat(b.stok);
-    const min    = parseFloat(b.stok_min);
-    const jenis  = document.getElementById('input-jenis').value;
+    const b    = barangData[id];
+    const stok = parseFloat(b.stok);
+    const min  = parseFloat(b.stok_min);
 
-    // Satuan hint di label
     document.getElementById('satuan-hint').textContent = '(satuan: ' + b.satuan + ')';
 
-    // Warna stok
     const elStok = document.getElementById('info-stok');
-    let stokClass = 'stok-ok';
-    let stokText  = stok.toLocaleString('id-ID') + ' ' + b.satuan;
-    if(stok <= 0)        { stokClass='stok-danger'; stokText += ' ✕ Habis!'; }
-    else if(stok <= min) { stokClass='stok-low';    stokText += ' ⚠ Tipis!'; }
-    elStok.className    = stokClass;
-    elStok.textContent  = stokText;
-
-    // Warning ekstra kalau keluar + stok tipis
-    if(jenis==='keluar' && stok <= min && stok > 0){
-        elStok.textContent += ' — hati-hati!';
-    }
+    let cls  = 'stok-ok';
+    let text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
+    if (stok <= 0)        { cls = 'stok-danger'; text += ' ✕ Habis!'; }
+    else if (stok <= min) { cls = 'stok-low';    text += ' ⚠ Tipis!'; }
+    elStok.className   = cls;
+    elStok.textContent = text;
 
     document.getElementById('info-stok-min').textContent = min.toLocaleString('id-ID') + ' ' + b.satuan;
     document.getElementById('info-kategori').textContent = b.nama_kategori || '-';
+    info.classList.remove('hidden');
+}
 
+// ── Info barang untuk panel Keluar ──────────────────────────────
+function updateBarangInfoKeluar(sel) {
+    const id   = sel.value;
+    const info = document.getElementById('barang-info-keluar');
+    if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
+
+    const b    = barangData[id];
+    const stok = parseFloat(b.stok);
+    const min  = parseFloat(b.stok_min);
+
+    document.getElementById('satuan-hint-keluar').textContent = '(satuan: ' + b.satuan + ')';
+
+    const elStok = document.getElementById('info-stok-keluar');
+    let cls  = 'stok-ok';
+    let text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
+    if (stok <= 0)        { cls = 'stok-danger'; text += ' ✕ Habis!'; }
+    else if (stok <= min) { cls = 'stok-low';    text += ' ⚠ Tipis! — hati-hati!'; }
+    elStok.className   = cls;
+    elStok.textContent = text;
+
+    document.getElementById('info-kategori-keluar').textContent = b.nama_kategori || '-';
     info.classList.remove('hidden');
 }
 </script>
