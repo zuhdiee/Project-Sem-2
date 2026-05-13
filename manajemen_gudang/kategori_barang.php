@@ -15,6 +15,7 @@ if (mysqli_num_rows($cek_ikon) === 0) {
 // ======================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'tambah_kategori') {
     $nama_kategori  = trim($_POST['nama_kategori']  ?? '');
+    $desk_kategori  = trim($_POST['deskripsi_kategori'] ?? '');
     $ikon_kategori  = trim($_POST['ikon_kategori']  ?? '📦');
     $warna_kategori = trim($_POST['warna_kategori'] ?? '#dbeafe');
 
@@ -25,12 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             : 1;
         $newID     = 'KAT' . str_pad($num, 3, '0', STR_PAD_LEFT);
         $nama_esc  = mysqli_real_escape_string($conn, $nama_kategori);
+        $desk_esc  = mysqli_real_escape_string($conn, $desk_kategori);
         $ikon_esc  = mysqli_real_escape_string($conn, $ikon_kategori);
         $warna_esc = mysqli_real_escape_string($conn, $warna_kategori);
 
         $result = mysqli_query($conn,
             "INSERT INTO kategori (id_kategori, nama_kategori, deskripsi, ikon, warna, created_at, updated_at)
-             VALUES ('$newID', '$nama_esc', '', '$ikon_esc', '$warna_esc', NOW(), NOW())"
+             VALUES ('$newID', '$nama_esc', '$desk_esc', '$ikon_esc', '$warna_esc', NOW(), NOW())"
         );
 
         if ($result) {
@@ -516,6 +518,15 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
             </div>
 
             <div class="section-gap">
+                <label class="form-label">Deskripsi</label>
+                <textarea name="deskripsi_kategori" id="inputDeskripsi"
+                          class="nama-input"
+                          rows="3"
+                          placeholder="Contoh: Beras berbagai jenis, beras ketan, tepung beras..."
+                          style="resize:vertical;min-height:72px;line-height:1.6;"></textarea>
+            </div>
+
+            <div class="section-gap">
                 <label class="form-label">Pilih Ikon</label>
                 <div class="icon-grid" id="iconGrid"></div>
             </div>
@@ -681,7 +692,8 @@ function closeDetailOutside(e) { if(e.target===document.getElementById('detailMo
 function openTambah() {
     selIcon=ICONS[0]; selColor=COLORS[0];
     renderIconGrid(); renderColorGrid();
-    document.getElementById('inputNama').value   = '';
+    document.getElementById('inputNama').value      = '';
+    document.getElementById('inputDeskripsi').value = '';
     document.getElementById('hiddenIkon').value  = ICONS[0];
     document.getElementById('hiddenWarna').value = COLORS[0].bg;
     updatePreview();
