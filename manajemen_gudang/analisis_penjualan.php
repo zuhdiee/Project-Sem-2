@@ -1,3 +1,113 @@
+<?php
+session_start();
+include 'koneksi.php';
+
+if (!isset($_SESSION['id'])) {
+    header("Location: login.php"); exit;
+}
+
+// ── Filter periode ────────────────────────────────────────────
+$periode = isset($_GET['periode']) ? $_GET['periode'] : 'bulan_ini';
+switch ($periode) {
+    case 'hari_ini':
+        $where_date    = "DATE(ts.created_at) = CURDATE()";
+        $label_periode = 'Hari Ini'; break;
+    case '7_hari':
+        $where_date    = "ts.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        $label_periode = '7 Hari Terakhir'; break;
+    case '3_bulan':
+        $where_date    = "ts.created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH)";
+        $label_periode = '3 Bulan Terakhir'; break;
+    case 'tahun_ini':
+        $where_date    = "YEAR(ts.created_at) = YEAR(CURDATE())";
+        $label_periode = 'Tahun Ini'; break;
+    default:
+        $where_date    = "MONTH(ts.created_at) = MONTH(CURDATE()) AND YEAR(ts.created_at) = YEAR(CURDATE())";
+        $label_periode = 'Bulan Ini';
+}
+
+// ── Stat Cards ────────────────────────────────────────────────
+$r_keluar = $conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok ts WHERE jenis='keluar' AND $where_date")->fetch_assoc()['t'];
+$r_masuk  = $conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok ts WHERE jenis='masuk'  AND $where_date")->fetch_assoc()['t'];
+$r_trx    = $conn->query("SELECT COUNT(*) AS t FROM transaksi_stok ts WHERE $where_date")->fetch_assoc()['t'];
+$r_tipis  = (int) $conn->query("SELECT COUNT(*) AS t FROM barang WHERE stok <= stok_min AND stok_min > 0")->fetch_assoc()['t'];
+
+// % perubahan vs bulan lalu
+$prev = $conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='keluar' AND MONTH(created_at)=MONTH(DATE_SUB(CURDATE(),INTERVAL 1 MONTH)) AND YEAR(created_at)=YEAR(DATE_SUB(CURDATE(),INTERVAL 1 MONTH))")->fetch_assoc()['t'];
+$pct_change = $prev > 0 ? round((($r_keluar - $prev) / $prev) * 100, 1) : 0;
+
+// ── Grafik 30 hari ────────────────────────────────────────────
+$grafik_label = $grafik_masuk_arr = $grafik_keluar_arr = [];
+for ($i = 29; $i >= 0; $i--) {
+    $tgl = date('Y-m-d', strtotime("-$i days"));
+    $grafik_label[]      = date('d M', strtotime("-$i days"));
+    $grafik_masuk_arr[]  = (float)$conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='masuk'  AND DATE(created_at)='$tgl'")->fetch_assoc()['t'];
+    $grafik_keluar_arr[] = (float)$conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='keluar' AND DATE(created_at)='$tgl'")->fetch_assoc()['t'];
+}
+
+// ── Grafik 6 bulan ────────────────────────────────────────────
+$grafik6_label = $grafik6_masuk = $grafik6_keluar = [];
+for ($i = 5; $i >= 0; $i--) {
+    $y = date('Y', strtotime("-$i months"));
+    $m = date('m', strtotime("-$i months"));
+    $grafik6_label[]  = date('M Y', strtotime("-$i months"));
+    $grafik6_masuk[]  = (float)$conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='masuk'  AND YEAR(created_at)=$y AND MONTH(created_at)=$m")->fetch_assoc()['t'];
+    $grafik6_keluar[] = (float)$conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='keluar' AND YEAR(created_at)=$y AND MONTH(created_at)=$m")->fetch_assoc()['t'];
+}
+
+// ── Barang Terlaris ───────────────────────────────────────────
+$terlaris = $conn->query("
+    SELECT b.nama_barang, b.merek, b.satuan,
+           k.nama_kategori,
+           SUM(ts.jumlah) AS total_keluar,
+           COUNT(ts.id_transaksi) AS jumlah_trx
+    FROM transaksi_stok ts
+    JOIN barang b ON ts.id_barang = b.id_barang
+    LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+    WHERE ts.jenis='keluar' AND $where_date
+    GROUP BY ts.id_barang, b.nama_barang, b.merek, b.satuan, k.nama_kategori
+    ORDER BY total_keluar DESC LIMIT 10
+");
+$terlaris_rows = [];
+if ($terlaris) while ($r = $terlaris->fetch_assoc()) $terlaris_rows[] = $r;
+$max_keluar = !empty($terlaris_rows) ? $terlaris_rows[0]['total_keluar'] : 1;
+
+// ── Rekap harian 7 hari ───────────────────────────────────────
+$rekap_harian = $conn->query("
+    SELECT DATE(created_at) AS tgl,
+           SUM(CASE WHEN jenis='masuk'  THEN jumlah ELSE 0 END) AS masuk,
+           SUM(CASE WHEN jenis='keluar' THEN jumlah ELSE 0 END) AS keluar,
+           COUNT(*) AS trx
+    FROM transaksi_stok
+    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+    GROUP BY DATE(created_at) ORDER BY tgl DESC
+");
+
+// ── Rekap bulanan 6 bulan ─────────────────────────────────────
+$rekap_bulanan = $conn->query("
+    SELECT DATE_FORMAT(created_at,'%Y-%m') AS bulan,
+           DATE_FORMAT(created_at,'%M %Y') AS bulan_label,
+           SUM(CASE WHEN jenis='masuk'  THEN jumlah ELSE 0 END) AS masuk,
+           SUM(CASE WHEN jenis='keluar' THEN jumlah ELSE 0 END) AS keluar
+    FROM transaksi_stok
+    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+    GROUP BY DATE_FORMAT(created_at,'%Y-%m'), DATE_FORMAT(created_at,'%M %Y')
+    ORDER BY bulan DESC
+");
+
+// ── Kategori aktif (donut) ────────────────────────────────────
+$kat_res = $conn->query("
+    SELECT k.id_kategori, k.nama_kategori, SUM(ts.jumlah) AS total
+    FROM transaksi_stok ts
+    JOIN barang b ON ts.id_barang = b.id_barang
+    JOIN kategori k ON b.id_kategori = k.id_kategori
+    WHERE ts.jenis='keluar' AND $where_date
+    GROUP BY k.id_kategori, k.nama_kategori ORDER BY total DESC LIMIT 5
+");
+$kat_data = []; $kat_total = 0;
+if ($kat_res) while ($r = $kat_res->fetch_assoc()) { $kat_data[] = $r; $kat_total += $r['total']; }
+$donut_colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444'];
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -5,207 +115,321 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analisis Penjualan | Putra Surya Agung</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #f1f5f9; 
-            color: #334155;
-            font-size: 13px;
-        }
-        
-        .sidebar { background: white; border-right: 1px solid #e2e8f0; }
-        
-        .nav-link {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px; border-radius: 12px;
-            color: #64748b; font-weight: 500; font-size: 13px; 
-            transition: all 0.2s ease; margin-bottom: 8px;
-        }
-
-        .nav-link:hover { color: #2563eb; background: #eff6ff; }
-        
-        .nav-active { 
-            background: #2563eb; color: white !important; 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .nav-label {
-            font-size: 10px; font-weight: 700; color: #94a3b8;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            margin: 24px 0 10px 16px;
-        }
-
-        .modern-card {
-            background: white; border-radius: 20px;
-            border: 1px solid #e2e8f0; padding: 24px;
-        }
-
-        .chart-placeholder {
-            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-            border: 1px dashed #cbd5e1;
-            border-radius: 16px;
-        }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#f1f5f9; color:#334155; font-size:13px; }
+        .sidebar { background:white; border-right:1px solid #e2e8f0; }
+        .nav-link { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; color:#64748b; font-weight:500; font-size:13px; transition:all .2s; margin-bottom:8px; }
+        .nav-link:hover { color:#2563eb; background:#eff6ff; }
+        .nav-active { background:#2563eb; color:white!important; box-shadow:0 4px 12px rgba(37,99,235,.2); }
+        .nav-label { font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin:24px 0 10px 16px; }
+        .modern-card { background:#fff; border-radius:20px; box-shadow:0 10px 15px -3px rgba(0,0,0,.07); border:1px solid #cbd5e1; }
+        .pill { padding:5px 14px; border-radius:10px; font-size:11px; font-weight:700; border:1.5px solid #e2e8f0; color:#64748b; background:white; cursor:pointer; transition:all .15s; text-decoration:none; display:inline-block; }
+        .pill:hover,.pill.active { background:#2563eb; color:white; border-color:#2563eb; }
+        .tab-btn { padding:7px 14px; font-size:11px; font-weight:700; border-radius:9px; cursor:pointer; transition:all .15s; color:#94a3b8; border:none; background:transparent; }
+        .tab-btn.active { background:#eff6ff; color:#2563eb; }
+        thead th { font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; padding:10px 14px; border-bottom:2px solid #f1f5f9; white-space:nowrap; }
+        tbody td { padding:11px 14px; border-bottom:1px solid #f8fafc; font-size:12px; vertical-align:middle; }
+        tr:hover td { background:#f8fafc; }
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+        @media print { .no-print{display:none!important} body{background:white} }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="w-64 sidebar flex flex-col p-5 h-full shrink-0">
-        <div class="flex items-center gap-3 mb-10 px-2">
-            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-200">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
+<?php include 'include/side_panel.php'; ?>
+
+<main class="flex-1 flex flex-col overflow-y-auto">
+    <?php include 'include/header.php'; ?>
+
+    <div class="p-8 pt-20">
+
+        <!-- Header -->
+        <div class="flex flex-wrap justify-between items-end gap-4 mb-6">
+            <div>
+                <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Analisis Penjualan</h1>
+                <p class="text-slate-500 text-[11px]">Pantau tren keluar masuk barang secara real-time.</p>
             </div>
-            <div class="flex flex-col">
-                <h2 class="text-[14px] font-extrabold tracking-tight text-slate-800 leading-none">Putra Surya Agung</h2>
-                <p class="text-[9px] text-blue-600 font-bold uppercase tracking-wider mt-1">Logistic System</p>
+            <div class="flex gap-2 flex-wrap no-print">
+                <?php foreach(['hari_ini'=>'Hari Ini','bulan_ini'=>'Bulan Ini','3_bulan'=>'3 Bulan','tahun_ini'=>'Tahun Ini'] as $v=>$l): ?>
+                <a href="?periode=<?= $v ?>" class="pill <?= $periode===$v?'active':'' ?>"><?= $l ?></a>
+                <?php endforeach; ?>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 flex items-center gap-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2.5"/></svg>
+                    Cetak Laporan
+                </button>
             </div>
         </div>
 
-        <nav class="flex-1 overflow-y-auto pr-2">
-            <div class="nav-label">Utama</div>
-            <a href="dashboard.php" class="nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                Dashboard
-            </a>
-
-            <div class="nav-label">Manajemen Stok</div>
-            <a href="data_barang.php" class="nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                Data Barang
-            </a>
-           <a href="kategori_barang.php" class="nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                Kategori Barang
-            </a>
-            <a href="barang_masuk.php" class="nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                Barang Masuk
-            </a>
-            <a href="barang_keluar.php" class="nav-link">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                Barang Keluar
-            </a>
-            <div class="nav-label">Laporan</div>
-            <a href="analisis_penjualan.php" class="nav-link nav-active">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                Analisis Penjualan
-            </a>
-        </nav>
-
-        <a href="logout.php" class="nav-link mt-auto text-rose-500 hover:bg-rose-50 border-t border-slate-50 pt-4">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
-            Logout
-        </a>
-    </aside>
-
-    <main class="flex-1 flex flex-col overflow-y-auto">
-        <header class="h-16 flex items-center justify-between px-8 shrink-0 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200">
-            <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg w-80 border border-slate-200">
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
-                <input type="text" placeholder="Cari laporan..." class="bg-transparent border-none outline-none text-[11px] w-full text-slate-600">
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="text-right">
-                    <p class="text-[12px] font-bold text-slate-800 leading-none">Erike Adi Mulya</p>
-                    <p class="text-[9px] text-blue-600 font-bold uppercase mt-1">Warehouse Admin</p>
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="modern-card p-5 border-l-4 border-l-blue-600">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Total Keluar</p>
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
                 </div>
-                <div class="w-9 h-9 bg-blue-100 rounded-full border border-blue-200 flex items-center justify-center text-blue-600 font-bold text-xs shadow-sm">EA</div>
+                <h3 class="text-2xl font-extrabold text-slate-800"><?= number_format($r_keluar) ?></h3>
+                <p class="text-[10px] mt-1 font-semibold <?= $pct_change >= 0 ? 'text-emerald-600' : 'text-rose-500' ?>">
+                    <?= $pct_change >= 0 ? '▲' : '▼' ?> <?= abs($pct_change) ?>% vs bulan lalu
+                </p>
             </div>
-        </header>
-
-        <div class="p-8">
-            <div class="flex justify-between items-end mb-8">
-                <div>
-                    <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Analisis Penjualan</h1>
-                    <p class="text-slate-500 text-[11px]">Pantau tren keluar masuk barang secara real-time.</p>
+            <div class="modern-card p-5 border-l-4 border-l-emerald-500">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Total Masuk</p>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    <button class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-[11px] font-bold text-slate-600 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2"/></svg>
-                        Bulan Ini
-                    </button>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2.5"/></svg>
-                        Cetak Laporan
-                    </button>
-                </div>
+                <h3 class="text-2xl font-extrabold text-slate-800"><?= number_format($r_masuk) ?></h3>
+                <p class="text-[10px] text-slate-400 mt-1"><?= $label_periode ?></p>
             </div>
+            <div class="modern-card p-5 border-l-4 border-l-violet-500">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Transaksi</p>
+                    <div class="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="1.8"/></svg>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-800"><?= number_format($r_trx) ?></h3>
+                <p class="text-[10px] text-slate-400 mt-1"><?= $label_periode ?></p>
+            </div>
+            <div class="modern-card p-5 border-l-4 border-l-rose-500">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-bold text-rose-500 uppercase">Stok Tipis</p>
+                    <div class="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke-width="2"/></svg>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-extrabold text-rose-700"><?= number_format($r_tipis) ?></h3>
+                <p class="text-[10px] mt-1"><a href="data_barang.php" class="text-rose-500 hover:underline font-semibold">Lihat detail →</a></p>
+            </div>
+        </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 modern-card">
-                    <div class="flex justify-between items-center mb-6">
+        <!-- Grafik + Donut -->
+        <div class="grid grid-cols-3 gap-5 mb-5">
+            <!-- Grafik Tren -->
+            <div class="col-span-2 modern-card p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
                         <h2 class="text-[14px] font-bold text-slate-800">Tren Pergerakan Barang</h2>
-                        <div class="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
-                            <span class="flex items-center gap-1.5 text-blue-600"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Masuk</span>
-                            <span class="flex items-center gap-1.5 text-rose-500"><span class="w-2 h-2 bg-rose-500 rounded-full"></span> Keluar</span>
-                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Masuk vs Keluar per hari / bulan</p>
                     </div>
-                    <div class="h-[300px] chart-placeholder flex items-center justify-center">
-                        <p class="text-slate-400 text-[11px] font-medium">[ Visualisasi Grafik Garis / Batang ]</p>
+                    <div class="flex items-center gap-3 no-print">
+                        <div class="flex gap-1 bg-slate-100 rounded-xl p-1">
+                            <button class="tab-btn active" id="tab30" onclick="switchGrafik('harian')">30 Hari</button>
+                            <button class="tab-btn" id="tab6"  onclick="switchGrafik('bulanan')">6 Bulan</button>
+                        </div>
+                        <div class="flex gap-3 text-[11px]">
+                            <span class="flex items-center gap-1.5 font-semibold text-blue-600"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>Masuk</span>
+                            <span class="flex items-center gap-1.5 font-semibold text-rose-500"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>Keluar</span>
+                        </div>
                     </div>
                 </div>
+                <div style="height:260px;position:relative;">
+                    <canvas id="grafikTren"></canvas>
+                </div>
+            </div>
 
-                <div class="space-y-6">
-                    <div class="modern-card bg-slate-900 text-white border-none relative overflow-hidden">
-                        <div class="relative z-10">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Barang Keluar</p>
-                            <h3 class="text-3xl font-extrabold mb-4">4,520 <span class="text-xs font-normal text-slate-400">Pcs</span></h3>
-                            <p class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-width="3"/></svg>
-                                12% Meningkat dari bulan lalu
-                            </p>
+            <!-- Donut -->
+            <div class="modern-card p-6 flex flex-col">
+                <h2 class="text-[14px] font-bold text-slate-800 mb-1">Distribusi Keluar</h2>
+                <p class="text-[11px] text-slate-400 mb-4">Per kategori · <?= $label_periode ?></p>
+                <?php if (empty($kat_data)): ?>
+                <div class="flex-1 flex items-center justify-center text-slate-300 text-[12px]">Belum ada data</div>
+                <?php else: ?>
+                <div style="height:155px;position:relative;margin:0 auto;width:155px;">
+                    <canvas id="grafikDonut"></canvas>
+                </div>
+                <div class="mt-4 space-y-2">
+                    <?php foreach ($kat_data as $ci => $k): ?>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:<?= $donut_colors[$ci % 5] ?>"></div>
+                            <span class="text-[11px] text-slate-600 truncate max-w-[110px]"><?= htmlspecialchars($k['nama_kategori']) ?></span>
                         </div>
-                        <div class="absolute -right-4 -bottom-4 opacity-10">
-                            <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                        </div>
+                        <span class="text-[11px] font-bold text-slate-700"><?= $kat_total > 0 ? round($k['total']/$kat_total*100) : 0 ?>%</span>
                     </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
 
-                    <div class="modern-card">
-                        <h2 class="text-[13px] font-bold text-slate-800 mb-4">Barang Terlaris</h2>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-[10px]">01</div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-slate-800">Indomie Goreng</p>
-                                        <p class="text-[9px] text-slate-400">Sembako</p>
-                                    </div>
-                                </div>
-                                <span class="text-[11px] font-extrabold text-slate-700">850 Keluar</span>
-                            </div>
-                            <div class="flex items-center justify-between border-t border-slate-50 pt-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 font-bold text-[10px]">02</div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-slate-800">Minyak Goreng 1L</p>
-                                        <p class="text-[9px] text-slate-400">Sembako</p>
-                                    </div>
-                                </div>
-                                <span class="text-[11px] font-extrabold text-slate-700">620 Keluar</span>
-                            </div>
-                        </div>
+        <!-- Barang Terlaris + Rekap -->
+        <div class="grid grid-cols-3 gap-5">
+
+            <!-- Terlaris -->
+            <div class="col-span-2 modern-card overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-[14px] font-bold text-slate-800">Barang Terlaris</h2>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Top 10 keluar terbanyak · <?= $label_periode ?></p>
                     </div>
+                    <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-xl">Keluar Terbanyak</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-slate-50/60">
+                                <th class="w-10 text-center">#</th>
+                                <th>Nama Barang</th>
+                                <th>Merek</th>
+                                <th>Kategori</th>
+                                <th class="text-right">Total Keluar</th>
+                                <th class="text-right">Transaksi</th>
+                                <th class="w-24">Proporsi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php if (empty($terlaris_rows)): ?>
+                        <tr><td colspan="7" class="text-center py-10 text-slate-300 text-[12px]">Belum ada data transaksi keluar.</td></tr>
+                        <?php else: foreach ($terlaris_rows as $rank => $t):
+                            $pct = $max_keluar > 0 ? round($t['total_keluar'] / $max_keluar * 100) : 0;
+                            $r = $rank + 1;
+                        ?>
+                        <tr>
+                            <td class="text-center">
+                                <span class="w-6 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-extrabold
+                                    <?= $r===1 ? 'bg-amber-100 text-amber-600' : ($r===2 ? 'bg-slate-100 text-slate-500' : ($r===3 ? 'bg-orange-50 text-orange-500' : 'text-slate-400')) ?>">
+                                    <?= $r ?>
+                                </span>
+                            </td>
+                            <td><p class="font-bold text-slate-800"><?= htmlspecialchars($t['nama_barang']) ?></p></td>
+                            <td class="text-slate-500"><?= htmlspecialchars($t['merek'] ?? '-') ?></td>
+                            <td><span class="inline-block bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md"><?= htmlspecialchars($t['nama_kategori'] ?? '-') ?></span></td>
+                            <td class="text-right font-extrabold text-slate-800">
+                                <?= number_format($t['total_keluar']) ?>
+                                <span class="text-[10px] font-normal text-slate-400"><?= $t['satuan'] ?></span>
+                            </td>
+                            <td class="text-right text-slate-500"><?= number_format($t['jumlah_trx']) ?>×</td>
+                            <td>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                    <div class="h-1.5 rounded-full bg-blue-500 transition-all" style="width:<?= $pct ?>%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Rekap Harian + Bulanan -->
+            <div class="flex flex-col gap-5">
+                <!-- Harian -->
+                <div class="modern-card overflow-hidden">
+                    <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                        <h2 class="text-[13px] font-bold text-slate-800">Rekap 7 Hari</h2>
+                        <span class="text-[10px] text-slate-400">Masuk / Keluar</span>
+                    </div>
+                    <table class="w-full text-[11px]">
+                        <thead><tr class="bg-slate-50/60">
+                            <th class="text-left px-4 py-2.5 text-[10px]">Tanggal</th>
+                            <th class="text-right px-4 py-2.5 text-[10px] text-emerald-500">Masuk</th>
+                            <th class="text-right px-4 py-2.5 text-[10px] text-blue-500">Keluar</th>
+                        </tr></thead>
+                        <tbody>
+                        <?php if (!$rekap_harian || $rekap_harian->num_rows === 0): ?>
+                        <tr><td colspan="3" class="text-center py-6 text-slate-300 text-[11px]">Belum ada data</td></tr>
+                        <?php else: while ($rh = $rekap_harian->fetch_assoc()): ?>
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                            <td class="px-4 py-2.5 font-semibold text-slate-700"><?= date('d M', strtotime($rh['tgl'])) ?></td>
+                            <td class="px-4 py-2.5 text-right font-bold text-emerald-600">+<?= number_format($rh['masuk']) ?></td>
+                            <td class="px-4 py-2.5 text-right font-bold text-blue-600">-<?= number_format($rh['keluar']) ?></td>
+                        </tr>
+                        <?php endwhile; endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Bulanan -->
+                <div class="modern-card overflow-hidden">
+                    <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                        <h2 class="text-[13px] font-bold text-slate-800">Rekap 6 Bulan</h2>
+                        <span class="text-[10px] text-slate-400">Masuk / Keluar</span>
+                    </div>
+                    <table class="w-full text-[11px]">
+                        <thead><tr class="bg-slate-50/60">
+                            <th class="text-left px-4 py-2.5 text-[10px]">Bulan</th>
+                            <th class="text-right px-4 py-2.5 text-[10px] text-emerald-500">Masuk</th>
+                            <th class="text-right px-4 py-2.5 text-[10px] text-blue-500">Keluar</th>
+                        </tr></thead>
+                        <tbody>
+                        <?php if (!$rekap_bulanan || $rekap_bulanan->num_rows === 0): ?>
+                        <tr><td colspan="3" class="text-center py-6 text-slate-300 text-[11px]">Belum ada data</td></tr>
+                        <?php else: while ($rb = $rekap_bulanan->fetch_assoc()): ?>
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-50">
+                            <td class="px-4 py-2.5 font-semibold text-slate-700"><?= $rb['bulan_label'] ?></td>
+                            <td class="px-4 py-2.5 text-right font-bold text-emerald-600">+<?= number_format($rb['masuk']) ?></td>
+                            <td class="px-4 py-2.5 text-right font-bold text-blue-600">-<?= number_format($rb['keluar']) ?></td>
+                        </tr>
+                        <?php endwhile; endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <footer class="mt-auto py-4 px-8 border-t border-slate-200 text-[10px] font-bold text-slate-400 flex justify-between bg-white/50">
-            <span>&copy; 2026 PSA LOGISTIC SYSTEM</span>
-            <div class="flex items-center gap-2">
-                <span class="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                <span class="tracking-widest uppercase">Data Sinkron</span>
-            </div>
-        </footer>
-    </main>
+    </div><!-- /p-8 -->
+    <?php include 'include/footer.php'; ?>
+</main>
 
+<script>
+const d30Label  = <?= json_encode($grafik_label) ?>;
+const d30Masuk  = <?= json_encode($grafik_masuk_arr) ?>;
+const d30Keluar = <?= json_encode($grafik_keluar_arr) ?>;
+const d6Label   = <?= json_encode($grafik6_label) ?>;
+const d6Masuk   = <?= json_encode($grafik6_masuk) ?>;
+const d6Keluar  = <?= json_encode($grafik6_keluar) ?>;
+
+const ctxTren = document.getElementById('grafikTren').getContext('2d');
+let grafikTren = new Chart(ctxTren, {
+    type: 'line',
+    data: {
+        labels: d30Label,
+        datasets: [
+            { label:'Masuk',  data:d30Masuk,  borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.08)',  borderWidth:2.5, pointRadius:2, pointHoverRadius:5, tension:.4, fill:true },
+            { label:'Keluar', data:d30Keluar, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.06)',   borderWidth:2.5, pointRadius:2, pointHoverRadius:5, tension:.4, fill:true }
+        ]
+    },
+    options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: {
+            legend:{ display:false },
+            tooltip:{ backgroundColor:'#1e293b', titleColor:'#94a3b8', bodyColor:'#f8fafc', padding:10, cornerRadius:10,
+                callbacks:{ label: c => ' '+c.dataset.label+': '+c.parsed.y.toLocaleString('id-ID') } }
+        },
+        scales:{
+            x:{ grid:{display:false}, ticks:{font:{size:10,family:'Plus Jakarta Sans'}, color:'#94a3b8', maxTicksLimit:10} },
+            y:{ beginAtZero:true, grid:{color:'#f1f5f9',drawBorder:false},
+                ticks:{font:{size:10}, color:'#94a3b8', callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v} }
+        }
+    }
+});
+
+function switchGrafik(mode) {
+    document.getElementById('tab30').classList.toggle('active', mode==='harian');
+    document.getElementById('tab6').classList.toggle('active',  mode==='bulanan');
+    grafikTren.data.labels              = mode==='harian' ? d30Label  : d6Label;
+    grafikTren.data.datasets[0].data   = mode==='harian' ? d30Masuk  : d6Masuk;
+    grafikTren.data.datasets[1].data   = mode==='harian' ? d30Keluar : d6Keluar;
+    grafikTren.update();
+}
+
+<?php if (!empty($kat_data)): ?>
+new Chart(document.getElementById('grafikDonut').getContext('2d'), {
+    type:'doughnut',
+    data:{
+        labels: <?= json_encode(array_column($kat_data,'nama_kategori')) ?>,
+        datasets:[{ data:<?= json_encode(array_column($kat_data,'total')) ?>, backgroundColor:['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444'], borderWidth:2, borderColor:'#fff', hoverOffset:6 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'70%',
+        plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1e293b', bodyColor:'#f8fafc', padding:8, cornerRadius:8,
+            callbacks:{label:c=>' '+c.label+': '+c.raw.toLocaleString('id-ID')} } } }
+});
+<?php endif; ?>
+</script>
 </body>
 </html>
