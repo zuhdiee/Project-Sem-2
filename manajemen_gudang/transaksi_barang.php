@@ -181,7 +181,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     $no = 1;
                     while ($row = $riwayat->fetch_assoc()): ?>
                     <tr>
-                        <td class="text-slate-400"><?= $no++ ?></td>
+                        <td class="text-slate-400"><?= $no++ ?></td>  
                         <td class="text-slate-400 whitespace-nowrap">
                             <?= date('d/m/Y', strtotime($row['created_at'])) ?>
                             <br><span class="text-[10px]"><?= date('H:i', strtotime($row['created_at'])) ?></span>
@@ -271,6 +271,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
             <!-- FORM: Barang Lama (restock) -->
             <form id="form-lama" method="POST" action="proses_transaksi.php" class="p-6 pt-3 space-y-4">
+                <input type="hidden" name="aksi" value="transaksi">
                 <input type="hidden" name="jenis" value="masuk">
 
                 <div class="grid grid-cols-2 gap-4">
@@ -338,7 +339,8 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             </form>
 
             <!-- FORM: Barang Baru -->
-            <form id="form-baru" method="POST" action="proses/tambah_barang.php" class="p-6 pt-3 space-y-4 hidden">
+            <form id="form-baru" method="POST" action="proses_transaksi.php" class="p-6 pt-3 space-y-4 hidden">
+                <input type="hidden" name="aksi" value="barang_baru">
 
                 <!-- Nama Barang -->
                 <div>
@@ -368,7 +370,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label>Stok Awal</label>
-                        <input type="number" name="stok" value="0" min="0"
+                        <input type="number" name="stok_awal" value="0" min="0"
                                class="input-field input-field-masuk" placeholder="0">
                     </div>
                     <div>
@@ -429,6 +431,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
         ═══════════════════════════════════════════ -->
         <div id="panel-keluar" class="hidden">
             <form method="POST" action="proses_transaksi.php" class="p-6 space-y-4">
+                <input type="hidden" name="aksi" value="transaksi">
                 <input type="hidden" name="jenis" value="keluar">
 
                 <div class="grid grid-cols-2 gap-4">

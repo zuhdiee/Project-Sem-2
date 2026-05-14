@@ -1,3 +1,11 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['id'])) { header("Location: login.php"); exit; }
+
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_error   = $_SESSION['flash_error']   ?? '';
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -39,6 +47,8 @@
         }
         tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
         .status-badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; }
+        .flash-ok  { background:#d1fae5; border:1px solid #6ee7b7; color:#065f46; border-radius:12px; padding:12px 16px; font-size:12px; font-weight:600; margin-bottom:16px; }
+        .flash-err { background:#ffe4e6; border:1px solid #fecdd3; color:#9f1239; border-radius:12px; padding:12px 16px; font-size:12px; font-weight:600; margin-bottom:16px; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -127,18 +137,18 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
 
         <div class="p-8 pt-20">
 
+            <?php if ($flash_success): ?>
+            <div class="flash-ok">✓ <?= htmlspecialchars($flash_success) ?></div>
+            <?php endif; ?>
+            <?php if ($flash_error): ?>
+            <div class="flash-err">✕ <?= htmlspecialchars($flash_error) ?></div>
+            <?php endif; ?>
+
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Data Barang</h1>
                     <p class="text-slate-500 text-[11px]">Kelola dan pantau seluruh daftar inventaris gudang.</p>
                 </div>
-                <button onclick="openModalTambahBarang()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Tambah Barang Baru
-                </button>
             </div>
 
             <div class="grid grid-cols-3 gap-5 mb-8">

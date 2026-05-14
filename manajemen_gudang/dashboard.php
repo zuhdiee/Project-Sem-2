@@ -42,6 +42,16 @@ $aktivitas = $conn->query("
     ORDER BY ts.created_at DESC
     LIMIT 10
 ");
+
+// ── Data Grafik 6 Bulan ──────────────────────────────────────
+$g_label = $g_masuk = $g_keluar = [];
+for ($i = 5; $i >= 0; $i--) {
+    $y = date('Y', strtotime("-$i months"));
+    $m = date('m', strtotime("-$i months"));
+    $g_label[]  = date('M Y', strtotime("-$i months"));
+    $g_masuk[]  = (float)$conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='masuk'  AND YEAR(created_at)=$y AND MONTH(created_at)=$m")->fetch_assoc()['t'];
+    $g_keluar[] = (float)$conn->query("SELECT COALESCE(SUM(jumlah),0) AS t FROM transaksi_stok WHERE jenis='keluar' AND YEAR(created_at)=$y AND MONTH(created_at)=$m")->fetch_assoc()['t'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -98,13 +108,6 @@ $aktivitas = $conn->query("
                     <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Ringkasan Gudang</h1>
                     <p class="text-slate-500 text-[11px]">Memantau pergerakan stok secara real-time.</p>
                 </div>
-                <button onclick="openModalTambahBarang()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-200 flex items-center gap-2 transition-all active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Tambah Barang Baru
-                </button>
             </div>
 
             <!-- Stat Cards -->
@@ -144,12 +147,23 @@ $aktivitas = $conn->query("
             <div class="grid grid-cols-3 gap-6">
                 <!-- Grafik -->
                 <div class="col-span-2 modern-card p-6 h-[380px] flex flex-col">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="font-bold text-slate-800 text-[13px]">Tren Penjualan Bulanan</h4>
-                        <div class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">6 Bulan Terakhir</div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-[13px]">Tren Pergerakan Stok</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Barang masuk vs keluar 6 bulan terakhir</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex gap-3 text-[11px]">
+                                <span class="flex items-center gap-1.5 font-semibold text-blue-600"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>Masuk</span>
+                                <span class="flex items-center gap-1.5 font-semibold text-rose-500"><span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>Keluar</span>
+                            </div>
+                            <a href="analisis_penjualan.php" class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100 hover:text-blue-600 hover:border-blue-200 transition">
+                                Detail →
+                            </a>
+                        </div>
                     </div>
-                    <div class="flex-1 w-full bg-slate-50/50 rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400 italic text-[11px]">
-                        [ Area Grafik Terintegrasi ]
+                    <div class="flex-1 w-full relative">
+                        <canvas id="grafikDashboard"></canvas>
                     </div>
                 </div>
 
@@ -206,5 +220,32 @@ $aktivitas = $conn->query("
     </main>
 
     <?php include_once 'include/modal_tambah_barang.php'; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+new Chart(document.getElementById('grafikDashboard').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: <?= json_encode($g_label) ?>,
+        datasets: [
+            { label:'Masuk',  data:<?= json_encode($g_masuk) ?>,  borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.09)',  borderWidth:2.5, pointRadius:3, pointHoverRadius:5, tension:.4, fill:true },
+            { label:'Keluar', data:<?= json_encode($g_keluar) ?>, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.06)',   borderWidth:2.5, pointRadius:3, pointHoverRadius:5, tension:.4, fill:true }
+        ]
+    },
+    options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: {
+            legend:{ display:false },
+            tooltip:{ backgroundColor:'#1e293b', titleColor:'#94a3b8', bodyColor:'#f8fafc', padding:10, cornerRadius:10,
+                callbacks:{ label: c => ' '+c.dataset.label+': '+c.parsed.y.toLocaleString('id-ID') } }
+        },
+        scales:{
+            x:{ grid:{display:false}, ticks:{font:{size:10,family:'Plus Jakarta Sans'}, color:'#94a3b8'} },
+            y:{ beginAtZero:true, grid:{color:'#f1f5f9',drawBorder:false},
+                ticks:{font:{size:10}, color:'#94a3b8', callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v} }
+        }
+    }
+});
+</script>
 </body>
 </html>
