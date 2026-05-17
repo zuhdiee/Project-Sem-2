@@ -1,4 +1,9 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['id'])) { header('Location: login.php'); exit; }
+
+$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+
 include 'koneksi.php';
 
 // ======================================
@@ -14,6 +19,11 @@ if (mysqli_num_rows($cek_ikon) === 0) {
 // TAMBAH KATEGORI
 // ======================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'tambah_kategori') {
+    if (!$is_admin) {
+        header('Location: kategori_barang.php?status=gagal&msg=' . urlencode('Akses ditolak. Hanya admin yang dapat menambahkan kategori.'));
+        exit;
+    }
+
     $nama_kategori  = trim($_POST['nama_kategori']  ?? '');
     $desk_kategori  = trim($_POST['deskripsi_kategori'] ?? '');
     $ikon_kategori  = trim($_POST['ikon_kategori']  ?? '📦');
@@ -379,10 +389,14 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
             <p class="text-slate-500 text-[11px] mt-1">Kelola kategori barang gudang secara terorganisir.</p>
         </div>
         <div class="flex items-center gap-3">
+            <?php if ($is_admin): ?>
             <button onclick="openTambah()" class="bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
                 Tambah Kategori
             </button>
+            <?php else: ?>
+            <span class="bg-slate-100 text-slate-500 text-[12px] font-semibold px-4 py-2 rounded-xl">Hanya admin dapat menambah kategori</span>
+            <?php endif; ?>
             <div class="search-wrap">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <input class="search-input" type="text" id="searchInput" placeholder="Cari kategori..." onkeyup="filterKategori()">

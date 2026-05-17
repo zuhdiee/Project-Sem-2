@@ -4,6 +4,7 @@ if (!isset($_SESSION['id'])) { header("Location: login.php"); exit; }
 
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
+$is_admin      = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 ?>
 <!DOCTYPE html>
@@ -55,19 +56,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
 <?php
 // ─── Koneksi Database ─────────────────────────────────────────
-$host = "localhost";
-$user = "root";
-$pass = "root";          // ← password kamu
-$db   = "inventory_psa";
-
-$conn = mysqli_connect($host, $user, $pass, $db);
-if (!$conn) {
-    die("<div style='padding:40px;color:red;font-family:sans-serif'>
-         <b>Koneksi Gagal:</b> " . mysqli_connect_error() . "
-         <br><small>Cek host, user, password, dan nama database.</small>
-         </div>");
-}
-mysqli_set_charset($conn, "utf8mb4");
+include 'koneksi.php';
 
 // ─── Pagination ───────────────────────────────────────────────
 $limit  = 10;
@@ -289,6 +278,7 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                                 </td>
 
                                 <td class="text-center">
+                                    <?php if ($is_admin): ?>
                                     <div class="flex justify-center gap-1">
                                         <a href="edit_barang.php?id=<?= urlencode($row['id_barang']) ?>"
                                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
@@ -303,6 +293,9 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                                             </svg>
                                         </button>
                                     </div>
+                                    <?php else: ?>
+                                    <span class="text-[11px] text-slate-400">Hanya admin dapat mengubah</span>
+                                    <?php endif; ?>
                                 </td>
 
                             </tr>

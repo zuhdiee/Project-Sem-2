@@ -6,6 +6,11 @@ if (!isset($_SESSION['id'])) {
     header("Location: login.php"); exit;
 }
 
+// Hanya izinkan akses untuk role 'admin' atau 'owner'
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'owner'])) {
+    header("Location: dashboard.php?pesan=akses_ditolak"); exit;
+}
+
 // ── Filter periode ────────────────────────────────────────────
 $periode = isset($_GET['periode']) ? $_GET['periode'] : 'bulan_ini';
 switch ($periode) {

@@ -103,6 +103,11 @@ for ($i = 5; $i >= 0; $i--) {
         <?php include_once 'include/header.php'; ?>
 
         <div class="p-8 pt-20">
+            <?php if (isset($_GET['pesan']) && $_GET['pesan'] === 'akses_ditolak'): ?>
+            <div style="background:#fff4f4;border:1px solid #fecaca;color:#7f1d1d;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:16px;">
+                ✕ Akses ditolak — Anda tidak memiliki izin untuk membuka halaman ini.
+            </div>
+            <?php endif; ?>
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Ringkasan Gudang</h1>

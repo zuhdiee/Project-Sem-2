@@ -49,20 +49,32 @@
             </div>
 
             <?php if(isset($_GET['pesan'])): ?>
-                <div class="mb-4 p-2.5 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                    <p class="text-red-700 text-[10px] font-semibold">
-                        <?php 
-                            if($_GET['pesan'] == "password_salah") echo "Password salah!";
-                            if($_GET['pesan'] == "user_tidak_ada") echo "User tidak ditemukan!";
-                        ?>
-                    </p>
+                <div class="mb-5 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3">
+                    <div class="w-5 h-5 rounded-full bg-rose-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-3 h-3 text-rose-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-rose-800 text-[12px] font-bold">
+                            <?php 
+                                if($_GET['pesan'] == "password_salah") echo "Password tidak cocok";
+                                elseif($_GET['pesan'] == "user_tidak_ada") echo "Username tidak ditemukan";
+                                else echo "Login gagal";
+                            ?>
+                        </p>
+                        <p class="text-rose-600 text-[11px] mt-0.5">
+                            <?php 
+                                if($_GET['pesan'] == "password_salah") echo "Password yang Anda masukkan salah. Coba lagi.";
+                                elseif($_GET['pesan'] == "user_tidak_ada") echo "Username tidak terdaftar di sistem. Periksa kembali.";
+                            ?>
+                        </p>
+                    </div>
                 </div>
             <?php endif; ?>
 
             <form action="proses_login.php" method="POST" class="space-y-4">
                 <div class="space-y-1">
                     <label class="text-[9px] uppercase tracking-widest font-bold text-slate-400 ml-1">Username</label>
-                    <input type="text" name="username" placeholder="Username" required
+                    <input type="text" name="username" placeholder="Username" value="<?= isset($_GET['username']) ? htmlspecialchars($_GET['username']) : '' ?>" required
                         class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all text-sm">
                 </div>
 

@@ -21,11 +21,11 @@ if (mysqli_num_rows($result) === 1) {
         header("Location: dashboard.php");
         exit();
     } else {
-        header("Location: index.php?pesan=password_salah");
+        header("Location: index.php?pesan=password_salah&username=" . urlencode($username));
         exit();
     }
 } else {
-    header("Location: index.php?pesan=user_tidak_ada");
+    header("Location: index.php?pesan=user_tidak_ada&username=" . urlencode($username));
     exit();
 }
 ?>
