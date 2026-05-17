@@ -7,7 +7,7 @@ if (!isset($_SESSION['id'])) {
 }
 
 // Hanya izinkan akses untuk role 'admin' atau 'owner'
-if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['Admin', 'Owner'])) {
+if (!isset($_SESSION['role']) || in_array($_SESSION['role'], ['Karyawan'])) {
     header("Location: dashboard.php?pesan=akses_ditolak"); exit;
 }
 
