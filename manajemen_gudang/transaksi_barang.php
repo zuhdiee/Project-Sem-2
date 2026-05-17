@@ -219,7 +219,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <?php include 'include/footer.php'; ?>
 </main>
- <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+ <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
 <!-- ===== MODAL ===== -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
 <div class="modal-box" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">

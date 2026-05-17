@@ -53,20 +53,20 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Transaksi Barang -->
             <a href="transaksi_barang.php" 
-               class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'transaksi_barang.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
+               class="flex items-cente gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'transaksi_barang.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
                 <span>Transaksi Barang</span>
             </a>
         </div>
-    <?php if (in_array($role, ['admin', 'owner'])): ?>
         <!-- Laporan Section -->
         <div class="text-blue-200/50 text-[12px] font-semibold px-4 mb-4 mt-10">Laporan</div>
+        <?php if (in_array($role, ['Admin', 'Owner'])): ?>
         <a href="analisis_penjualan.php" 
            class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'analisis_penjualan.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <span>Analisis Penjualan</span>
         </a>
-    <?php endif; ?>
+        <?php endif; ?>
     </nav>
 
     <div class="mt-auto pt-4 flex justify-center">

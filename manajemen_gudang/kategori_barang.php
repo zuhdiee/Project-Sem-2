@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['id'])) { header('Location: login.php'); exit; }
 
-$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'Admin';
 
 include 'koneksi.php';
 

@@ -4,7 +4,7 @@ if (!isset($_SESSION['id'])) { header("Location: login.php"); exit; }
 
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
-$is_admin      = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+$is_admin      = isset($_SESSION['role']) && $_SESSION['role'] === 'Admin';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 ?>
 <!DOCTYPE html>
