@@ -1,5 +1,7 @@
 <?php
-// Mengambil nama file yang sedang aktif
+if (session_status() === PHP_SESSION_NONE) session_start();
+$role = $_SESSION['role'] ?? '';
+
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -56,7 +58,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span>Transaksi Barang</span>
             </a>
         </div>
-
+    <?php if (in_array($role, ['admin', 'owner'])): ?>
         <!-- Laporan Section -->
         <div class="text-blue-200/50 text-[12px] font-semibold px-4 mb-4 mt-10">Laporan</div>
         <a href="analisis_penjualan.php" 
@@ -64,6 +66,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <span>Analisis Penjualan</span>
         </a>
+    <?php endif; ?>
     </nav>
 
     <div class="mt-auto pt-4 flex justify-center">
