@@ -1,6 +1,9 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['id'])) { header("Location: login.php"); exit; }
+// if (!isset($_SESSION['id'])) {
+//     header("Location: login.php");
+//     exit;
+// }
 
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
@@ -48,11 +51,31 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         }
         tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
         .status-badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; }
-        .flash-ok  { background:#d1fae5; border:1px solid #6ee7b7; color:#065f46; border-radius:12px; padding:12px 16px; font-size:12px; font-weight:600; margin-bottom:16px; }
-        .flash-err { background:#ffe4e6; border:1px solid #fecdd3; color:#9f1239; border-radius:12px; padding:12px 16px; font-size:12px; font-weight:600; margin-bottom:16px; }
+        /* ── Toast Notification ── */
+        #toast-container{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
+        .toast{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:16px;font-size:12.5px;font-weight:600;min-width:320px;max-width:520px;box-shadow:0 12px 40px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);pointer-events:all;opacity:0;transform:translateY(-20px) scale(0.96);transition:opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),transform 0.35s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden}
+        .toast.show{opacity:1;transform:translateY(0) scale(1)}
+        .toast.hide{opacity:0;transform:translateY(-16px) scale(0.96);transition:opacity 0.25s ease,transform 0.25s ease}
+        .toast-ok {background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;color:#065f46}
+        .toast-err{background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1.5px solid #fca5a5;color:#9f1239}
+        .toast-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+        .toast-icon-ok {background:#bbf7d0}
+        .toast-icon-err{background:#fecdd3}
+        .toast-body{flex:1}
+        .toast-title{font-size:12px;font-weight:700;margin-bottom:2px}
+        .toast-msg{font-size:11px;font-weight:500;opacity:0.85;line-height:1.4}
+        .toast-close{width:22px;height:22px;border-radius:6px;border:none;cursor:pointer;background:rgba(0,0,0,0.07);color:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;transition:background 0.15s}
+        .toast-close:hover{background:rgba(0,0,0,0.14)}
+        .toast-progress{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 16px 16px;animation:toast-bar 4.5s linear forwards}
+        .toast-progress-ok {background:linear-gradient(90deg,#34d399,#059669)}
+        .toast-progress-err{background:linear-gradient(90deg,#fb7185,#e11d48)}
+        @keyframes toast-bar{from{width:100%}to{width:0%}}
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
+
+<!-- ── Toast Container ── -->
+<div id="toast-container"></div>
 
 <?php
 // ─── Koneksi Database ─────────────────────────────────────────
@@ -131,12 +154,7 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
 
         <div class="p-8 pt-20">
 
-            <?php if ($flash_success): ?>
-            <div class="flash-ok">✓ <?= htmlspecialchars($flash_success) ?></div>
-            <?php endif; ?>
-            <?php if ($flash_error): ?>
-            <div class="flash-err">✕ <?= htmlspecialchars($flash_error) ?></div>
-            <?php endif; ?>
+            <?php /* Flash messages handled by toast – see #toast-container below */ ?>
 
             <div class="flex justify-between items-start mb-6">
                 <div>
@@ -526,22 +544,57 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
         if (e.target === this) tutupModalHapus();
     });
 
-    // ─── LOGIKA NOTIFIKASI SUKSES ───
-    // Cek parameter 'status' di URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('status') === 'success') {
-        window.addEventListener('DOMContentLoaded', function() {
-            // Memanggil fungsi toast dari file modal_tambah_barang.php
-            if (typeof showToastTambahBarang === 'function') {
-                showToastTambahBarang();
-                
-                // Menghapus parameter status dari URL agar tidak muncul lagi saat refresh
-                const newUrl = new URL(window.location);
-                newUrl.searchParams.delete('status');
-                window.history.replaceState({}, document.title, newUrl);
-            }
-        });
+    // ── Toast System ──────────────────────────────────────────────
+    function showToast(type, title, message) {
+        const container = document.getElementById('toast-container');
+        const isOk = type === 'ok';
+
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + (isOk ? 'toast-ok' : 'toast-err');
+        toast.style.position = 'relative';
+        toast.style.overflow = 'hidden';
+        toast.innerHTML = `
+            <div class="toast-icon ${isOk ? 'toast-icon-ok' : 'toast-icon-err'}">
+                ${isOk
+                    ? `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#059669"><path d="M5 13l4 4L19 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+                    : `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#e11d48"><path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" stroke-linecap="round"/></svg>`
+                }
+            </div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                <div class="toast-msg">${message}</div>
+            </div>
+            <button class="toast-close" onclick="dismissToast(this.closest('.toast'))">✕</button>
+            <div class="toast-progress ${isOk ? 'toast-progress-ok' : 'toast-progress-err'}"></div>
+        `;
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+
+        // Auto-dismiss setelah 4.5 detik
+        const timer = setTimeout(() => dismissToast(toast), 4500);
+        toast._timer = timer;
     }
+    function dismissToast(toast) {
+        if (!toast) return;
+        clearTimeout(toast._timer);
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 300);
+    }
+
+    // ── Trigger dari PHP flash session ────────────────────────────
+    <?php if ($flash_success): ?>
+    window.addEventListener('DOMContentLoaded', function() {
+        showToast('ok', 'Berhasil! 🎉', <?= json_encode(htmlspecialchars($flash_success)) ?>);
+    });
+    <?php endif; ?>
+    <?php if ($flash_error): ?>
+    window.addEventListener('DOMContentLoaded', function() {
+        showToast('err', 'Terjadi Kesalahan', <?= json_encode(htmlspecialchars($flash_error)) ?>);
+    });
+    <?php endif; ?>
     </script>
 
 </body>
