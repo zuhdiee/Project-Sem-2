@@ -102,6 +102,7 @@ $stat = mysqli_fetch_assoc($res_stat);
 $res_barang = mysqli_query($conn, "
     SELECT
         b.id_barang, b.nama_barang, b.merek,
+        b.id_kategori,
         k.nama_kategori,
         b.satuan, b.harga_beli, b.harga_jual,
         b.stok, b.stok_min
@@ -280,12 +281,23 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                                 <td class="text-center">
                                     <?php if ($is_admin): ?>
                                     <div class="flex justify-center gap-1">
-                                        <a href="edit_barang.php?id=<?= urlencode($row['id_barang']) ?>"
-                                           class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                                        <button type="button"
+                                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                            title="Edit"
+                                            data-id="<?= htmlspecialchars($row['id_barang'], ENT_QUOTES) ?>"
+                                            data-nama="<?= htmlspecialchars($row['nama_barang'], ENT_QUOTES) ?>"
+                                            data-merek="<?= htmlspecialchars($row['merek'] ?? '', ENT_QUOTES) ?>"
+                                            data-id_kategori="<?= htmlspecialchars($row['id_kategori'] ?? '', ENT_QUOTES) ?>"
+                                            data-satuan="<?= htmlspecialchars($row['satuan'], ENT_QUOTES) ?>"
+                                            data-harga_beli="<?= htmlspecialchars($row['harga_beli'], ENT_QUOTES) ?>"
+                                            data-harga_jual="<?= htmlspecialchars($row['harga_jual'], ENT_QUOTES) ?>"
+                                            data-stok="<?= htmlspecialchars($row['stok'], ENT_QUOTES) ?>"
+                                            data-stok_min="<?= htmlspecialchars($row['stok_min'], ENT_QUOTES) ?>"
+                                            onclick="openEditModal(this)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/>
                                             </svg>
-                                        </a>
+                                        </button>
                                         <button onclick="konfirmasiHapus('<?= $row['id_barang'] ?>', '<?= addslashes(htmlspecialchars($row['nama_barang'])) ?>')"
                                                 class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,6 +362,83 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
     </main>
 
     <?php include 'include/modal_tambah_barang.php'; ?>
+
+<?php $kat_for_edit = mysqli_query($conn, "SELECT id_kategori, nama_kategori FROM kategori ORDER BY nama_kategori ASC"); ?>
+    <div id="modalEdit" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+         style="background: rgba(15,30,60,0.55); backdrop-filter: blur(4px);">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+            <h3 class="text-[16px] font-bold text-slate-800 text-center mb-2">Edit Barang</h3>
+            <form id="editForm" action="proses/edit_barang.php" method="POST" class="space-y-3">
+                <input type="hidden" name="id_barang">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Nama Barang</label>
+                    <input name="nama_barang" required class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Merek</label>
+                    <input name="merek" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Kategori</label>
+                    <select name="id_kategori" required class="w-full px-3 py-2 border rounded-lg">
+                        <?php while ($k = mysqli_fetch_assoc($kat_for_edit)): ?>
+                            <option value="<?= $k['id_kategori'] ?>"><?= htmlspecialchars($k['nama_kategori']) ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Satuan</label>
+                        <input name="satuan" required class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Stok Minimum</label>
+                        <input name="stok_min" type="number" step="1" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Harga Beli</label>
+                        <input name="harga_beli" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Harga Jual</label>
+                        <input name="harga_jual" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Stok</label>
+                    <input name="stok" type="number" step="1" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function openEditModal(btn) {
+        const d = btn.dataset;
+        const f = document.getElementById('editForm');
+        f.id_barang.value = d.id || '';
+        f.nama_barang.value = d.nama || '';
+        f.merek.value = d.merek || '';
+        f.id_kategori.value = d.id_kategori || '';
+        f.satuan.value = d.satuan || '';
+        f.harga_beli.value = d.harga_beli || '';
+        f.harga_jual.value = d.harga_jual || '';
+        f.stok.value = d.stok || '';
+        f.stok_min.value = d.stok_min || '';
+        const m = document.getElementById('modalEdit');
+        m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function closeEditModal() { const m = document.getElementById('modalEdit'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    document.addEventListener('DOMContentLoaded', function() {
+        const me = document.getElementById('modalEdit'); if (me) me.addEventListener('click', function(e){ if (e.target === this) closeEditModal(); });
+    });
+    </script>
 
     <div id="modalHapus" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
          style="background: rgba(15,30,60,0.55); backdrop-filter: blur(4px);">
