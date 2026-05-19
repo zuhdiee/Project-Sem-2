@@ -117,36 +117,73 @@ for ($i = 5; $i >= 0; $i--) {
 
             <!-- Stat Cards -->
             <div class="grid grid-cols-4 gap-5 mb-8">
-                <div class="modern-card p-5 border-l-4 border-l-blue-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Stok</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">
-                        <?= number_format($total_stok, 0, ',', '.') ?>
-                        <span class="text-[10px] font-normal text-slate-400 ml-1">Pcs</span>
-                    </h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Semua barang di gudang</p>
+
+                <!-- Total Stok -->
+                <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-blue-500">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total Stok</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-slate-800"><?= number_format($total_stok, 0, ',', '.') ?></span>
+                            <span class="text-[11px] font-semibold text-slate-400">Pcs</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Semua barang di gudang</p>
+                    </div>
                 </div>
-                <div class="modern-card p-5 border-l-4 border-l-emerald-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Barang Masuk</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">
-                        <?= number_format($barang_masuk, 0, ',', '.') ?>
-                    </h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Bulan ini</p>
+
+                <!-- Barang Masuk -->
+                <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-emerald-500">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Barang Masuk</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-emerald-700"><?= number_format($barang_masuk, 0, ',', '.') ?></span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Bulan ini</p>
+                    </div>
                 </div>
-                <div class="modern-card p-5 border-l-4 border-l-orange-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Barang Keluar</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">
-                        <?= number_format($barang_keluar, 0, ',', '.') ?>
-                    </h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Bulan ini</p>
+
+                <!-- Barang Keluar -->
+                <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-orange-500">
+                    <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Barang Keluar</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-orange-600"><?= number_format($barang_keluar, 0, ',', '.') ?></span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Bulan ini</p>
+                    </div>
                 </div>
-                <div class="modern-card p-5 border-l-4 border-l-rose-600">
-                    <p class="text-[10px] font-bold text-rose-600 uppercase mb-1">Stok Tipis</p>
-                    <h3 class="text-xl font-extrabold text-rose-700">
-                        <?= number_format($stok_tipis, 0) ?>
-                        <span class="text-[10px] font-normal text-slate-400 ml-1">Item</span>
-                    </h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Di bawah stok minimum</p>
-                </div>
+
+                <!-- Stok Tipis (clickable) -->
+                <a href="data_barang.php?stok=tipis" class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-rose-500 group transition hover:shadow-lg hover:border-rose-300 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center flex-shrink-0 group-hover:bg-rose-100 transition">
+                        <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-0.5">Stok Tipis</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-rose-700"><?= number_format($stok_tipis, 0) ?></span>
+                            <span class="text-[11px] font-semibold text-slate-400">Item</span>
+                        </div>
+                        <p class="text-[10px] text-rose-400 mt-0.5 font-medium group-hover:text-rose-600 transition">Klik untuk lihat →</p>
+                    </div>
+                </a>
+
             </div>
 
             <div class="grid grid-cols-3 gap-6">

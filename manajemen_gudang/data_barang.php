@@ -79,6 +79,10 @@ if ($search !== '') {
     $s = mysqli_real_escape_string($conn, $search);
     $where_parts[] = "(b.nama_barang LIKE '%$s%' OR b.merek LIKE '%$s%')";
 }
+$filter_stok = isset($_GET['stok']) ? trim($_GET['stok']) : '';
+if ($filter_stok === 'tipis') {
+    $where_parts[] = "b.stok < b.stok_min AND b.stok_min > 0";
+}
 if ($where_parts) {
     $where_sql = 'WHERE ' . implode(' AND ', $where_parts);
 }
@@ -142,30 +146,69 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
             </div>
 
             <div class="grid grid-cols-3 gap-5 mb-8">
-                <div class="modern-card p-5 border-l-4 border-l-blue-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Variasi</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">
-                        <?= number_format($stat['total_variasi']) ?>
-                        <span class="text-[10px] font-normal text-slate-400 ml-1">Barang</span>
-                    </h3>
+
+                <!-- Card: Total Variasi -->
+                <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-blue-500">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total Variasi</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-slate-800"><?= number_format($stat['total_variasi']) ?></span>
+                            <span class="text-[11px] font-semibold text-slate-400">Jenis Barang</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Terdaftar di inventaris</p>
+                    </div>
                 </div>
-                <div class="modern-card p-5 border-l-4 border-l-emerald-600">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Stok Aman</p>
-                    <h3 class="text-xl font-extrabold text-slate-800">
-                        <?= number_format($stat['stok_aman']) ?>
-                    </h3>
+
+                <!-- Card: Stok Aman -->
+                <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-emerald-500">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Stok Aman</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-emerald-700"><?= number_format($stat['stok_aman']) ?></span>
+                            <span class="text-[11px] font-semibold text-slate-400">Barang</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Di atas batas minimum</p>
+                    </div>
                 </div>
-                <div class="modern-card p-5 border-l-4 border-l-rose-600">
-                    <p class="text-[10px] font-bold text-rose-600 uppercase mb-1">Stok Menipis</p>
-                    <h3 class="text-xl font-extrabold text-rose-700">
-                        <?= number_format($stat['stok_menipis']) ?>
-                    </h3>
-                </div>
+
+                <!-- Card: Stok Menipis (clickable → filter tipis) -->
+                <a href="?stok=tipis" class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-rose-500 group transition hover:shadow-lg hover:border-rose-200 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center flex-shrink-0 group-hover:bg-rose-100 transition">
+                        <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-0.5">Stok Menipis</p>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-extrabold text-rose-700"><?= number_format($stat['stok_menipis']) ?></span>
+                            <span class="text-[11px] font-semibold text-slate-400">Barang</span>
+                        </div>
+                        <p class="text-[10px] text-rose-400 mt-0.5 font-medium group-hover:text-rose-600 transition">Klik untuk lihat daftar →</p>
+                    </div>
+                </a>
+
             </div>
 
             <div class="modern-card overflow-hidden">
 
                 <div class="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3 bg-slate-50/50">
+                    <?php if ($filter_stok === 'tipis'): ?>
+                    <div class="w-full flex items-center justify-between bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 mb-1">
+                        <span class="text-[11px] font-bold text-rose-700">⚠ Menampilkan barang dengan stok di bawah minimum</span>
+                        <a href="data_barang.php" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 underline">Tampilkan semua</a>
+                    </div>
+                    <?php endif; ?>
                     <form method="GET" class="flex flex-wrap gap-2">
                         <select name="kategori" onchange="this.form.submit()"
                                 class="text-[11px] font-bold bg-white border border-slate-200 rounded-lg px-3 py-1.5 outline-none text-slate-600">
