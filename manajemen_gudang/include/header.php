@@ -24,26 +24,57 @@ foreach (explode(' ', trim($userName)) as $part) {
 if ($initials === '') $initials = 'US';
 ?>
 
-<!-- Header tetap h-16, absolute, z-0 — tampilan tidak berubah -->
-<header class="h-16 flex items-center justify-between px-8 bg-white/90 backdrop-blur-md absolute top-0 left-0 w-full z-0 border-b border-slate-100">
+<!-- Header -->
+<header class="h-16 flex items-center justify-between px-8 bg-white/95 backdrop-blur-md absolute top-0 left-0 w-full z-0 border-b border-slate-100 shadow-sm">
 
-    <!-- Search bar dengan margin kiri agar muncul dari balik sidebar -->
-    <div class="flex items-center gap-3 bg-slate-50 px-5 py-2 rounded-full w-96 border border-slate-200/60 ml-80 transition-all">
-        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Kiri: tanggal & waktu -->
+    <div class="ml-80 flex items-center gap-2 text-slate-400">
+        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
-        <input type="text" placeholder="Cari kategori..." class="bg-transparent border-none outline-none text-sm w-full text-slate-600 placeholder:text-slate-400">
+        <span class="text-[11px] font-semibold" id="header-datetime"></span>
     </div>
 
-    <!-- User info — nama & role dari session DB -->
+    <!-- Kanan: user info -->
     <div class="flex items-center gap-3">
-        <div class="text-right">
-            <p class="text-[13px] font-bold text-[#1e3a8a] leading-tight"><?= htmlspecialchars($userName) ?></p>
-            <p class="text-[10px] text-blue-500 font-semibold mt-0.5 uppercase tracking-wide"><?= htmlspecialchars($userRoleLabel) ?></p>
+
+        <!-- Badge role -->
+        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+            <?php
+                if ($userRole === 'Admin')    echo 'bg-blue-50 text-blue-600 border border-blue-100';
+                elseif ($userRole === 'Owner') echo 'bg-purple-50 text-purple-600 border border-purple-100';
+                else                          echo 'bg-slate-100 text-slate-500 border border-slate-200';
+            ?>">
+            <?= htmlspecialchars($userRoleLabel) ?>
+        </span>
+
+        <!-- Divider -->
+        <div class="w-px h-6 bg-slate-200"></div>
+
+        <!-- Nama + avatar -->
+        <div class="flex items-center gap-2.5">
+            <p class="text-[13px] font-bold text-slate-700 leading-tight"><?= htmlspecialchars($userName) ?></p>
+            <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold text-[11px] shadow-md ring-2 ring-white">
+                <?= htmlspecialchars($initials) ?>
+            </div>
         </div>
-        <div class="w-10 h-10 bg-[#1e3a8a] rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md border-2 border-white">
-            <?= htmlspecialchars($initials) ?>
-        </div>
+
     </div>
 
 </header>
+
+<script>
+(function() {
+    const el = document.getElementById('header-datetime');
+    if (!el) return;
+    const days   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    function update() {
+        const now = new Date();
+        el.textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear()
+            + '  •  ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    }
+    update();
+    setInterval(update, 30000);
+})();
+</script>
