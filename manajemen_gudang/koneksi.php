@@ -1,7 +1,7 @@
 <?php
-$host = "127.0.0.1:3307";
+$host = "localhost";
 $user = "root";
-$pass = ""; // Kosongkan jika pakai XAMPP default
+$pass = "root"; // Kosongkan jika pakai XAMPP default
 $db   = "inventory_psa";
 
 $conn = mysqli_connect($host, $user, $pass, $db);

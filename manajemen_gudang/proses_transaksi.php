@@ -178,7 +178,7 @@ if ($aksi === 'barang_baru') {
                     (id_transaksi, id_barang, jenis, jumlah, keterangan, id_user, created_at, supplier, no_struk)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmt->bind_param('sssdsiss',
+            $stmt->bind_param('sssdsisss',
                 $id_transaksi,
                 $id_barang,
                 $jenis_masuk,
