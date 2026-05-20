@@ -10,7 +10,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Logo Section -->
     <div class="flex items-center gap-3 mb-12 px-2">
         <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-            <img src="include/logo.png" alt="Logo" class="max-w-full max-h-full object-contain">
+            <img src="include/Logo.png" alt="Logo" class="max-w-full max-h-full object-contain">
         </div>
         <div class="flex flex-col">
             <h2 class="text-lg font-bold tracking-tight leading-none text-white whitespace-nowrap">Putra Surya Agung</h2>
