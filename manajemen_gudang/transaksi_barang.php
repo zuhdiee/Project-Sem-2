@@ -420,8 +420,8 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Supplier / Sumber</label>
-                        <input type="text" name="supplier" value="Stok Awal"
-                               class="input-field input-field-masuk" placeholder="Stok Awal">
+                        <input type="text" name="supplier" value=""
+                               class="input-field input-field-masuk" placeholder="Nama Supplier">
                     </div>
                     <div>
                         <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
