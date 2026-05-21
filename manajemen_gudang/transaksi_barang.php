@@ -136,8 +136,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <div class="p-8 pt-20">
 
-    <!-- Toast notifications ditampilkan via JS di bawah -->
-
     <!-- Page Header -->
     <div class="mb-6 flex items-start justify-between">
         <div>
@@ -145,7 +143,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             <p class="text-slate-400 text-[11px] mt-0.5">Kelola barang masuk dan keluar gudang dalam satu tempat.</p>
         </div>
         <div class="flex gap-2">
-            
             <button onclick="openModal('masuk')"
                 class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -193,7 +190,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     $no = 1;
                     while ($row = $riwayat->fetch_assoc()): ?>
                     <tr>
-                        <td class="text-slate-400"><?= $no++ ?></td>  
+                        <td class="text-slate-400"><?= $no++ ?></td>
                         <td class="text-slate-400 whitespace-nowrap">
                             <?= date('d/m/Y', strtotime($row['created_at'])) ?>
                             <br><span class="text-[10px]"><?= date('H:i', strtotime($row['created_at'])) ?></span>
@@ -231,7 +228,8 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <?php include 'include/footer.php'; ?>
 </main>
- <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
+
+<?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
 <!-- ===== MODAL ===== -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
 <div class="modal-box" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -260,9 +258,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
     <!-- Scrollable body -->
     <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling:touch;">
 
-        <!-- ══════════════════════════════════════════
-             PANEL MASUK
-        ═══════════════════════════════════════════ -->
+        <!-- PANEL MASUK -->
         <div id="panel-masuk">
 
             <!-- Toggle: Barang Lama / Barang Baru -->
@@ -285,6 +281,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             <form id="form-lama" method="POST" action="proses_transaksi.php" class="p-6 pt-3 space-y-4">
                 <input type="hidden" name="aksi" value="transaksi">
                 <input type="hidden" name="jenis" value="masuk">
+                <input type="hidden" name="no_struk" value="0"><!-- FIX: cegah error integer kosong -->
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -353,15 +350,14 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             <!-- FORM: Barang Baru -->
             <form id="form-baru" method="POST" action="proses_transaksi.php" class="p-6 pt-3 space-y-4 hidden">
                 <input type="hidden" name="aksi" value="barang_baru">
+                <input type="hidden" name="no_struk" value="0"><!-- FIX: cegah error integer kosong -->
 
-                <!-- Nama Barang -->
                 <div>
                     <label>Nama Barang *</label>
                     <input type="text" name="nama_barang" id="nb_nama"
                            class="input-field input-field-masuk" placeholder="Nama barang..." required>
                 </div>
 
-                <!-- Merek + Kategori -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Merek</label>
@@ -378,7 +374,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     </div>
                 </div>
 
-                <!-- Stok + Stok Min + Satuan -->
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label>Stok Awal</label>
@@ -402,7 +397,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     </div>
                 </div>
 
-                <!-- Harga Beli + Harga Jual -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Harga Beli</label>
@@ -416,7 +410,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     </div>
                 </div>
 
-                <!-- Supplier + Keterangan -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Supplier / Sumber</label>
@@ -438,13 +431,12 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
         </div><!-- /panel-masuk -->
 
-        <!-- ══════════════════════════════════════════
-             PANEL KELUAR
-        ═══════════════════════════════════════════ -->
+        <!-- PANEL KELUAR -->
         <div id="panel-keluar" class="hidden">
             <form method="POST" action="proses_transaksi.php" class="p-6 space-y-4">
                 <input type="hidden" name="aksi" value="transaksi">
                 <input type="hidden" name="jenis" value="keluar">
+                <input type="hidden" name="no_struk" value="0"><!-- FIX: cegah error integer kosong -->
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -510,6 +502,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 </div>
 </div>
 <?php endif; ?>
+
 <!-- ===== TOAST CONTAINER ===== -->
 <div id="toast-container"></div>
 
@@ -518,7 +511,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 function showToast(type, title, message) {
     const container = document.getElementById('toast-container');
     const isOk = type === 'ok';
-
     const toast = document.createElement('div');
     toast.className = 'toast ' + (isOk ? 'toast-ok' : 'toast-err');
     toast.style.position = 'relative';
@@ -538,11 +530,7 @@ function showToast(type, title, message) {
         <div class="toast-progress ${isOk ? 'toast-progress-ok' : 'toast-progress-err'}"></div>
     `;
     container.appendChild(toast);
-
-    // Animate in
     requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-
-    // Auto-dismiss setelah 4.5 detik
     const timer = setTimeout(() => dismissToast(toast), 4500);
     toast._timer = timer;
 }
@@ -555,7 +543,6 @@ function dismissToast(toast) {
     setTimeout(() => toast.remove(), 300);
 }
 
-// ── Trigger dari PHP flash session ──────────────────────────────
 <?php if ($flash_success): ?>
 window.addEventListener('DOMContentLoaded', function() {
     showToast('ok', 'Berhasil! 🎉', <?= json_encode(htmlspecialchars($flash_success)) ?>);
@@ -569,12 +556,10 @@ window.addEventListener('DOMContentLoaded', function() {
 
 const barangData = <?= json_encode(array_column($barang_list, null, 'id_barang')) ?>;
 
-// ── Modal open/close ──────────────────────────────────────────────
 function openModal(jenis = 'masuk') {
     document.getElementById('modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
     switchTab(jenis);
-    // Set tanggal hari ini
     const today = new Date().toISOString().split('T')[0];
     const dl = document.getElementById('input-date-lama');
     const dk = document.getElementById('input-date-keluar');
@@ -589,30 +574,23 @@ function closeModalOnBg(e) {
     if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
-// ── Switch tab Masuk / Keluar ────────────────────────────────────
 function switchTab(jenis) {
     const isMasuk = jenis === 'masuk';
-
     const hdr = document.getElementById('modal-header');
     hdr.className = (isMasuk ? 'modal-header-masuk' : 'modal-header-keluar') + ' p-6 pb-4 flex-shrink-0';
     document.getElementById('modal-title').textContent = isMasuk ? 'Barang Masuk' : 'Barang Keluar';
-
     document.getElementById('tab-masuk').className  = 'tab-btn tab-masuk'  + (isMasuk  ? ' active' : '');
     document.getElementById('tab-keluar').className = 'tab-btn tab-keluar' + (!isMasuk ? ' active' : '');
-
     document.getElementById('panel-masuk').classList.toggle('hidden', !isMasuk);
     document.getElementById('panel-keluar').classList.toggle('hidden', isMasuk);
 }
 
-// ── Toggle Barang Lama / Barang Baru (hanya di panel Masuk) ─────
 function switchMasukMode(mode) {
     const isLama = mode === 'lama';
     document.getElementById('form-lama').classList.toggle('hidden', !isLama);
     document.getElementById('form-baru').classList.toggle('hidden', isLama);
-
     const btnLama = document.getElementById('toggle-lama');
     const btnBaru = document.getElementById('toggle-baru');
-
     if (isLama) {
         btnLama.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all bg-white text-blue-700 shadow-sm';
         btnBaru.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all text-slate-500';
@@ -622,18 +600,14 @@ function switchMasukMode(mode) {
     }
 }
 
-// ── Info barang untuk panel Masuk (barang lama) ──────────────────
 function updateBarangInfo(sel) {
     const id   = sel.value;
     const info = document.getElementById('barang-info');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
-
     const b    = barangData[id];
     const stok = parseFloat(b.stok);
     const min  = parseFloat(b.stok_min);
-
     document.getElementById('satuan-hint').textContent = '(satuan: ' + b.satuan + ')';
-
     const elStok = document.getElementById('info-stok');
     let cls  = 'stok-ok';
     let text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
@@ -641,24 +615,19 @@ function updateBarangInfo(sel) {
     else if (stok <= min) { cls = 'stok-low';    text += ' ⚠ Tipis!'; }
     elStok.className   = cls;
     elStok.textContent = text;
-
     document.getElementById('info-stok-min').textContent = min.toLocaleString('id-ID') + ' ' + b.satuan;
     document.getElementById('info-kategori').textContent = b.nama_kategori || '-';
     info.classList.remove('hidden');
 }
 
-// ── Info barang untuk panel Keluar ──────────────────────────────
 function updateBarangInfoKeluar(sel) {
     const id   = sel.value;
     const info = document.getElementById('barang-info-keluar');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
-
     const b    = barangData[id];
     const stok = parseFloat(b.stok);
     const min  = parseFloat(b.stok_min);
-
     document.getElementById('satuan-hint-keluar').textContent = '(satuan: ' + b.satuan + ')';
-
     const elStok = document.getElementById('info-stok-keluar');
     let cls  = 'stok-ok';
     let text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
@@ -666,7 +635,6 @@ function updateBarangInfoKeluar(sel) {
     else if (stok <= min) { cls = 'stok-low';    text += ' ⚠ Tipis! — hati-hati!'; }
     elStok.className   = cls;
     elStok.textContent = text;
-
     document.getElementById('info-kategori-keluar').textContent = b.nama_kategori || '-';
     info.classList.remove('hidden');
 }
