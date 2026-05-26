@@ -511,128 +511,447 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.dd-menu').forEach(m => m.classList.remove('open'));
 });
 
-// ── Cetak PDF ──────────────────────────────────────────────────
+// ── Cetak PDF Modern Clean Style ──────────────────────────────
+// manusia memang punya bakat luar biasa membuat laporan PDF terlihat seperti print out warnet tahun 2009.
+// jadi mari kita selamatkan desainnya sedikit.
+
 function cetakPDF() {
     const { jsPDF } = window.jspdf;
-    const doc  = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const now  = new Date();
-    const tgl  = now.toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
-    const jam  = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
-    const periode = document.getElementById('lblPeriode').textContent;
 
-    // Header biru
-    doc.setFillColor(37, 99, 235);
-    doc.rect(0, 0, 210, 30, 'F');
-    doc.setTextColor(255,255,255);
-    doc.setFontSize(15); doc.setFont('helvetica','bold');
-    doc.text('Laporan Analisis Penjualan', 14, 12);
-    doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text('Putra Surya Agung – Logistic System', 14, 19);
-    doc.text('Periode: ' + periode + '   |   Dicetak: ' + tgl + ' ' + jam, 14, 25);
-
-    // Stat boxes
-    doc.setTextColor(51,65,85);
-    doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('Ringkasan Periode', 14, 38);
-
-    const stats = [
-        ['Total Keluar', '<?= number_format($r_keluar) ?>', [37,99,235]],
-        ['Total Masuk',  '<?= number_format($r_masuk) ?>',  [16,185,129]],
-        ['Transaksi',    '<?= number_format($r_trx) ?>',    [139,92,246]],
-        ['Stok Tipis',   '<?= number_format($r_tipis) ?>',  [239,68,68]],
-    ];
-    stats.forEach(([lbl, val, col], i) => {
-        const x = 14 + i * 46;
-        doc.setFillColor(...col);
-        doc.roundedRect(x, 42, 43, 22, 3, 3, 'F');
-        doc.setTextColor(255,255,255);
-        doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-        doc.text(lbl, x+4, 50);
-        doc.setFontSize(14); doc.setFont('helvetica','bold');
-        doc.text(val, x+4, 59);
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
     });
 
-    // Barang Terlaris
-    doc.setTextColor(51,65,85);
-    doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('Barang Terlaris – ' + periode, 14, 74);
+    const pageWidth  = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const now = new Date();
+
+    const tgl = now.toLocaleDateString('id-ID', {
+        day:'2-digit',
+        month:'long',
+        year:'numeric'
+    });
+
+    const jam = now.toLocaleTimeString('id-ID', {
+        hour:'2-digit',
+        minute:'2-digit'
+    });
+
+    const periode = document.getElementById('lblPeriode').textContent;
+
+    // ── COLOR SYSTEM ─────────────────────
+    const COLORS = {
+        primary: [30,41,59],
+        blue: [37,99,235],
+        green: [16,185,129],
+        red: [239,68,68],
+        violet: [124,58,237],
+        text: [15,23,42],
+        sub: [100,116,139],
+        line: [226,232,240],
+        bg: [248,250,252]
+    };
+
+    // ── HEADER ───────────────────────────
+    doc.setFillColor(...COLORS.primary);
+    doc.rect(0, 0, pageWidth, 30, 'F');
+
+    // aksen kecil kiri atas
+    doc.setFillColor(...COLORS.blue);
+    doc.roundedRect(14, 8, 4, 14, 2, 2, 'F');
+
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.text('Laporan Analisis Penjualan', 22, 16);
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(203,213,225);
+    doc.text('Putra Surya Agung • Warehouse Management System', 22, 22);
+
+    // info kanan
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+
+    doc.text('Periode', 150, 12);
+    doc.setFont('helvetica','bold');
+    doc.text(periode, 150, 17);
+
+    doc.setFont('helvetica','normal');
+    doc.text('Dicetak', 150, 23);
+    doc.text(`${tgl} • ${jam}`, 150, 28);
+
+    // ── TITLE SECTION ────────────────────
+    let y = 42;
+
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...COLORS.text);
+    doc.setFontSize(13);
+    doc.text('Ringkasan Statistik', 14, y);
+
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(...COLORS.sub);
+    doc.setFontSize(8.5);
+    doc.text('Ikhtisar aktivitas stok berdasarkan periode yang dipilih.', 14, y + 5);
+
+    // ── SUMMARY CARDS ────────────────────
+    const cards = [
+        {
+            title:'Barang Keluar',
+            value:'<?= number_format($r_keluar) ?>',
+            color:COLORS.blue
+        },
+        {
+            title:'Barang Masuk',
+            value:'<?= number_format($r_masuk) ?>',
+            color:COLORS.green
+        },
+        {
+            title:'Total Transaksi',
+            value:'<?= number_format($r_trx) ?>',
+            color:COLORS.violet
+        },
+        {
+            title:'Stok Tipis',
+            value:'<?= number_format($r_tipis) ?>',
+            color:COLORS.red
+        }
+    ];
+
+    let startX = 14;
+    let boxY   = 54;
+    let boxW   = 43;
+    let boxH   = 28;
+    let gap    = 4;
+
+    cards.forEach((item, index) => {
+
+        const x = startX + (index * (boxW + gap));
+
+        // shadow fake
+        doc.setFillColor(240,244,248);
+        doc.roundedRect(x, boxY + 1, boxW, boxH, 5, 5, 'F');
+
+        // main box
+        doc.setFillColor(255,255,255);
+        doc.roundedRect(x, boxY, boxW, boxH, 5, 5, 'F');
+
+        // border
+        doc.setDrawColor(...COLORS.line);
+        doc.roundedRect(x, boxY, boxW, boxH, 5, 5);
+
+        // aksen kiri
+        doc.setFillColor(...item.color);
+        doc.roundedRect(x, boxY, 2, boxH, 5, 5, 'F');
+
+        // title
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...COLORS.sub);
+        doc.text(item.title, x + 7, boxY + 10);
+
+        // value
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(16);
+        doc.setTextColor(...COLORS.text);
+        doc.text(item.value, x + 7, boxY + 20);
+
+    });
+
+    y = boxY + boxH + 16;
+
+    // ── SECTION FUNCTION ─────────────────
+    function sectionTitle(title, subtitle = '') {
+
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(12);
+        doc.setTextColor(...COLORS.text);
+        doc.text(title, 14, y);
+
+        if(subtitle){
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(8);
+            doc.setTextColor(...COLORS.sub);
+            doc.text(subtitle, 14, y + 4);
+        }
+
+        y += 8;
+    }
+
+    // ── BARANG TERLARIS ──────────────────
+    sectionTitle(
+        'Barang Terlaris',
+        'Produk dengan jumlah keluar tertinggi.'
+    );
 
     <?php
     $pdf_terlaris = [];
+
     foreach ($terlaris_rows as $i => $t) {
         $pdf_terlaris[] = [
-            $i+1,
+            $i + 1,
             $t['nama_barang'],
             $t['merek'] ?? '-',
-            $t['nama_kategori'] ?? '-',
-            number_format($t['total_keluar']).' '.$t['satuan'],
-            number_format($t['jumlah_trx']).'x'
+            number_format($t['total_keluar']) . ' ' . $t['satuan'],
+            number_format($t['jumlah_trx']) . 'x'
         ];
     }
     ?>
+
     doc.autoTable({
-        startY: 77,
-        head: [['#','Nama Barang','Merek','Kategori','Total Keluar','Transaksi']],
-        body: <?= json_encode($pdf_terlaris ?: [['','Belum ada data','','','','']]) ?>,
-        styles: { fontSize:8, cellPadding:2.5 },
-        headStyles: { fillColor:[37,99,235], textColor:255, fontStyle:'bold' },
-        alternateRowStyles: { fillColor:[248,250,252] },
-        columnStyles: { 0:{cellWidth:8,halign:'center'}, 4:{halign:'right'}, 5:{halign:'right'} },
+        startY: y,
+        head: [['#','Nama Barang','Merek','Total Keluar','Transaksi']],
+        body: <?= json_encode($pdf_terlaris ?: [['','Belum ada data','','','']]) ?>,
+
+        styles: {
+            fontSize: 8,
+            cellPadding: 3,
+            textColor: COLORS.text,
+            lineColor: COLORS.line,
+            lineWidth: 0.2
+        },
+
+        headStyles: {
+            fillColor: COLORS.primary,
+            textColor: [255,255,255],
+            fontStyle: 'bold',
+            halign: 'left'
+        },
+
+        alternateRowStyles: {
+            fillColor: COLORS.bg
+        },
+
+        bodyStyles: {
+            valign: 'middle'
+        },
+
+        columnStyles: {
+            0:{ halign:'center', cellWidth:10 },
+            3:{ halign:'right' },
+            4:{ halign:'right' }
+        },
+
         margin: { left:14, right:14 }
     });
 
-    // Rekap Harian
-    let y1 = doc.lastAutoTable.finalY + 8;
-    doc.setTextColor(51,65,85); doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('Rekap 7 Hari Terakhir', 14, y1);
+    y = doc.lastAutoTable.finalY + 14;
+
+    // ── REKAP HARIAN ─────────────────────
+    sectionTitle(
+        'Rekap Harian',
+        'Ringkasan barang masuk dan keluar.'
+    );
+
     <?php
     $pdf_harian = [];
+
     foreach ($rekap_harian_rows as $rh) {
-        $pdf_harian[] = [date('d M Y', strtotime($rh['tgl'])), '+'.$rh['masuk'], '-'.$rh['keluar']];
+        $pdf_harian[] = [
+            date('d M Y', strtotime($rh['tgl'])),
+            number_format($rh['masuk']),
+            number_format($rh['keluar'])
+        ];
     }
     ?>
+
     doc.autoTable({
-        startY: y1 + 3,
-        head: [['Tanggal','Masuk','Keluar']],
+        startY: y,
+        head: [['Tanggal','Barang Masuk','Barang Keluar']],
         body: <?= json_encode($pdf_harian ?: [['Belum ada data','','']]) ?>,
-        styles: { fontSize:8, cellPadding:2.5 },
-        headStyles: { fillColor:[16,185,129], textColor:255, fontStyle:'bold' },
-        alternateRowStyles: { fillColor:[248,250,252] },
-        columnStyles: { 1:{halign:'right',textColor:[16,185,129]}, 2:{halign:'right',textColor:[37,99,235]} },
-        margin: { left:14, right:14 }
+
+        styles: {
+            fontSize:8,
+            cellPadding:3,
+            textColor:COLORS.text,
+            lineColor:COLORS.line,
+            lineWidth:0.2
+        },
+
+        headStyles: {
+            fillColor:COLORS.primary,
+            textColor:[255,255,255]
+        },
+
+        alternateRowStyles: {
+            fillColor:COLORS.bg
+        },
+
+        columnStyles: {
+            1:{ halign:'right' },
+            2:{ halign:'right' }
+        },
+
+        margin:{ left:14, right:14 }
     });
 
-    // Rekap Bulanan
-    let y2 = doc.lastAutoTable.finalY + 8;
-    doc.setTextColor(51,65,85); doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('Rekap 6 Bulan Terakhir', 14, y2);
+    y = doc.lastAutoTable.finalY + 14;
+
+    // ── RIWAYAT BARANG MASUK ─────────────
+    sectionTitle(
+        'Riwayat Barang Masuk',
+        'Aktivitas stok masuk terbaru.'
+    );
+
     <?php
-    $pdf_bulanan = [];
-    foreach ($rekap_bulanan_rows as $rb) {
-        $pdf_bulanan[] = [$rb['bulan_label'], '+'.$rb['masuk'], '-'.$rb['keluar']];
+    $riwayat_masuk_pdf = [];
+
+    $riwayat_masuk = $conn->query("
+        SELECT 
+            ts.created_at,
+            b.nama_barang,
+            ts.jumlah,
+            ts.keterangan
+        FROM transaksi_stok ts
+        JOIN barang b ON ts.id_barang = b.id_barang
+        WHERE ts.jenis='masuk' AND $where_date
+        ORDER BY ts.created_at DESC
+        LIMIT 50
+    ");
+
+    if ($riwayat_masuk) {
+        while ($r = $riwayat_masuk->fetch_assoc()) {
+            $riwayat_masuk_pdf[] = [
+                date('d/m/Y H:i', strtotime($r['created_at'])),
+                $r['nama_barang'],
+                number_format($r['jumlah']),
+                $r['keterangan'] ?: '-'
+            ];
+        }
     }
     ?>
+
     doc.autoTable({
-        startY: y2 + 3,
-        head: [['Bulan','Masuk','Keluar']],
-        body: <?= json_encode($pdf_bulanan ?: [['Belum ada data','','']]) ?>,
-        styles: { fontSize:8, cellPadding:2.5 },
-        headStyles: { fillColor:[139,92,246], textColor:255, fontStyle:'bold' },
-        alternateRowStyles: { fillColor:[248,250,252] },
-        columnStyles: { 1:{halign:'right',textColor:[16,185,129]}, 2:{halign:'right',textColor:[37,99,235]} },
-        margin: { left:14, right:14 }
+        startY: y,
+        head: [['Tanggal','Nama Barang','Jumlah','Keterangan']],
+        body: <?= json_encode($riwayat_masuk_pdf ?: [['Belum ada data','','','']]) ?>,
+
+        styles: {
+            fontSize:7.5,
+            cellPadding:2.8,
+            textColor:COLORS.text,
+            lineColor:COLORS.line,
+            lineWidth:0.2
+        },
+
+        headStyles: {
+            fillColor:COLORS.primary,
+            textColor:[255,255,255]
+        },
+
+        alternateRowStyles: {
+            fillColor:COLORS.bg
+        },
+
+        columnStyles: {
+            2:{ halign:'right' }
+        },
+
+        margin:{ left:14, right:14 }
     });
 
-    // Footer setiap halaman
-    const total = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= total; i++) {
+    y = doc.lastAutoTable.finalY + 14;
+
+    // ── RIWAYAT BARANG KELUAR ────────────
+    sectionTitle(
+        'Riwayat Barang Keluar',
+        'Aktivitas stok keluar terbaru.'
+    );
+
+    <?php
+    $riwayat_keluar_pdf = [];
+
+    $riwayat_keluar = $conn->query("
+        SELECT 
+            ts.created_at,
+            b.nama_barang,
+            ts.jumlah,
+            ts.keterangan
+        FROM transaksi_stok ts
+        JOIN barang b ON ts.id_barang = b.id_barang
+        WHERE ts.jenis='keluar' AND $where_date
+        ORDER BY ts.created_at DESC
+        LIMIT 50
+    ");
+
+    if ($riwayat_keluar) {
+        while ($r = $riwayat_keluar->fetch_assoc()) {
+            $riwayat_keluar_pdf[] = [
+                date('d/m/Y H:i', strtotime($r['created_at'])),
+                $r['nama_barang'],
+                number_format($r['jumlah']),
+                $r['keterangan'] ?: '-'
+            ];
+        }
+    }
+    ?>
+
+    doc.autoTable({
+        startY: y,
+        head: [['Tanggal','Nama Barang','Jumlah','Keterangan']],
+        body: <?= json_encode($riwayat_keluar_pdf ?: [['Belum ada data','','','']]) ?>,
+
+        styles: {
+            fontSize:7.5,
+            cellPadding:2.8,
+            textColor:COLORS.text,
+            lineColor:COLORS.line,
+            lineWidth:0.2
+        },
+
+        headStyles: {
+            fillColor:COLORS.primary,
+            textColor:[255,255,255]
+        },
+
+        alternateRowStyles: {
+            fillColor:COLORS.bg
+        },
+
+        columnStyles: {
+            2:{ halign:'right' }
+        },
+
+        margin:{ left:14, right:14 }
+    });
+
+    // ── FOOTER ───────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+
+    for (let i = 1; i <= totalPages; i++) {
+
         doc.setPage(i);
-        doc.setFontSize(7); doc.setTextColor(148,163,184);
-        doc.text('Warehouse Management System v1.0 © 2026 Putra Surya Agung', 14, 290);
-        doc.text('Hal. ' + i + ' / ' + total, 196, 290, { align:'right' });
+
+        // garis footer
+        doc.setDrawColor(...COLORS.line);
+        doc.line(14, 285, 196, 285);
+
+        // kiri
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...COLORS.sub);
+
+        doc.text(
+            'Generated by Putra Surya Agung System',
+            14,
+            289
+        );
+
+        // kanan
+        doc.text(
+            `Page ${i} / ${totalPages}`,
+            196,
+            289,
+            { align:'right' }
+        );
     }
 
-    doc.save('Laporan_Analisis_<?= $periode ?>_<?= date("Ymd") ?>.pdf');
+    // ── SAVE ─────────────────────────────
+    doc.save(`Laporan_Analisis_${periode}_<?= date("Ymd") ?>.pdf`);
 }
 </script>
 </body>
