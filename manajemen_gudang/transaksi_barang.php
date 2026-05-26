@@ -146,17 +146,16 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             <p class="text-slate-400 text-[11px] mt-0.5">Kelola barang masuk dan keluar gudang dalam satu tempat.</p>
         </div>
         <div class="flex gap-2">
-            
-            <button onclick="openModal('masuk')"
-                class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
-                Barang Masuk
-            </button>
-            <button onclick="openModal('keluar')"
-                class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-rose-100 transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-width="2.5" stroke-linecap="round"/></svg>
-                Barang Keluar
-            </button>
+            <?php if ($_SESSION['role'] !== 'Karyawan'): ?>
+                <button onclick="openModal('masuk')" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    Barang Masuk
+                </button>
+                <button onclick="openModal('keluar')" class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-rose-100 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    Barang Keluar
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
