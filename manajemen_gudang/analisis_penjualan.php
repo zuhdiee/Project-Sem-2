@@ -524,8 +524,7 @@ function cetakPDF() {
         format: 'a4'
     });
 
-    const pageWidth  = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
     const now = new Date();
 
@@ -542,63 +541,65 @@ function cetakPDF() {
 
     const periode = document.getElementById('lblPeriode').textContent;
 
-    // ── COLOR SYSTEM ─────────────────────
+    // ── COLORS ──────────────────────────
     const COLORS = {
-        primary: [30,41,59],
-        blue: [37,99,235],
-        green: [16,185,129],
-        red: [239,68,68],
-        violet: [124,58,237],
         text: [15,23,42],
         sub: [100,116,139],
         line: [226,232,240],
-        bg: [248,250,252]
+        soft: [248,250,252],
+        blue: [37,99,235],
+        green: [16,185,129],
+        red: [239,68,68],
+        violet: [124,58,237]
     };
 
-    // ── HEADER ───────────────────────────
-    doc.setFillColor(...COLORS.primary);
-    doc.rect(0, 0, pageWidth, 30, 'F');
+    // ── HEADER CLEAN ────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(...COLORS.text);
 
-    // aksen kecil kiri atas
-    doc.setFillColor(...COLORS.blue);
-    doc.roundedRect(14, 8, 4, 14, 2, 2, 'F');
+    doc.text('Laporan Analisis Penjualan', 14, 20);
 
-    doc.setTextColor(255,255,255);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(18);
-    doc.text('Laporan Analisis Penjualan', 22, 16);
-
-    doc.setFont('helvetica','normal');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(203,213,225);
-    doc.text('Putra Surya Agung • Warehouse Management System', 22, 22);
+    doc.setTextColor(...COLORS.sub);
+
+    doc.text(
+        'Putra Surya Agung • Warehouse Management System',
+        14,
+        26
+    );
+
+    // garis bawah
+    doc.setDrawColor(...COLORS.line);
+    doc.line(14, 32, 196, 32);
 
     // info kanan
-    doc.setTextColor(255,255,255);
     doc.setFontSize(8);
 
-    doc.text('Periode', 150, 12);
-    doc.setFont('helvetica','bold');
-    doc.text(periode, 150, 17);
+    doc.text(`Periode : ${periode}`, 196, 18, { align:'right' });
+    doc.text(`${tgl} • ${jam}`, 196, 24, { align:'right' });
 
-    doc.setFont('helvetica','normal');
-    doc.text('Dicetak', 150, 23);
-    doc.text(`${tgl} • ${jam}`, 150, 28);
-
-    // ── TITLE SECTION ────────────────────
-    let y = 42;
+    // ── SUMMARY TITLE ───────────────────
+    let y = 44;
 
     doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
     doc.setTextColor(...COLORS.text);
-    doc.setFontSize(13);
+
     doc.text('Ringkasan Statistik', 14, y);
 
     doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
     doc.setTextColor(...COLORS.sub);
-    doc.setFontSize(8.5);
-    doc.text('Ikhtisar aktivitas stok berdasarkan periode yang dipilih.', 14, y + 5);
 
-    // ── SUMMARY CARDS ────────────────────
+    doc.text(
+        'Ikhtisar aktivitas stok berdasarkan periode yang dipilih.',
+        14,
+        y + 5
+    );
+
+    // ── SUMMARY CARDS ───────────────────
     const cards = [
         {
             title:'Barang Keluar',
@@ -623,66 +624,77 @@ function cetakPDF() {
     ];
 
     let startX = 14;
-    let boxY   = 54;
+    let boxY   = 56;
     let boxW   = 43;
-    let boxH   = 28;
+    let boxH   = 24;
     let gap    = 4;
 
     cards.forEach((item, index) => {
 
         const x = startX + (index * (boxW + gap));
 
-        // shadow fake
-        doc.setFillColor(240,244,248);
-        doc.roundedRect(x, boxY + 1, boxW, boxH, 5, 5, 'F');
-
-        // main box
+        // card
         doc.setFillColor(255,255,255);
-        doc.roundedRect(x, boxY, boxW, boxH, 5, 5, 'F');
+        doc.roundedRect(x, boxY, boxW, boxH, 3, 3, 'F');
 
         // border
         doc.setDrawColor(...COLORS.line);
-        doc.roundedRect(x, boxY, boxW, boxH, 5, 5);
+        doc.roundedRect(x, boxY, boxW, boxH, 3, 3);
 
-        // aksen kiri
+        // aksen atas
         doc.setFillColor(...item.color);
-        doc.roundedRect(x, boxY, 2, boxH, 5, 5, 'F');
+        
+        doc.roundedRect(
+            x,
+            boxY - 1.5,
+            boxW,
+            1,
+            0.5,
+            0.5,
+            'F'
+        );
 
         // title
         doc.setFont('helvetica','normal');
-        doc.setFontSize(8);
+        doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.sub);
-        doc.text(item.title, x + 7, boxY + 10);
+
+        doc.text(item.title, x + 5, boxY + 9);
 
         // value
         doc.setFont('helvetica','bold');
-        doc.setFontSize(16);
+        doc.setFontSize(15);
         doc.setTextColor(...COLORS.text);
-        doc.text(item.value, x + 7, boxY + 20);
 
+        doc.text(item.value, x + 5, boxY + 18);
     });
 
-    y = boxY + boxH + 16;
+    y = boxY + boxH + 18;
 
-    // ── SECTION FUNCTION ─────────────────
+    // ── SECTION TITLE ───────────────────
     function sectionTitle(title, subtitle = '') {
 
+        doc.setDrawColor(...COLORS.line);
+        doc.line(14, y - 4, 196, y - 4);
+
         doc.setFont('helvetica','bold');
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setTextColor(...COLORS.text);
-        doc.text(title, 14, y);
+
+        doc.text(title, 14, y + 2);
 
         if(subtitle){
             doc.setFont('helvetica','normal');
             doc.setFontSize(8);
             doc.setTextColor(...COLORS.sub);
-            doc.text(subtitle, 14, y + 4);
+
+            doc.text(subtitle, 14, y + 7);
         }
 
-        y += 8;
+        y += 14;
     }
 
-    // ── BARANG TERLARIS ──────────────────
+    // ── BARANG TERLARIS ─────────────────
     sectionTitle(
         'Barang Terlaris',
         'Produk dengan jumlah keluar tertinggi.'
@@ -704,30 +716,30 @@ function cetakPDF() {
 
     doc.autoTable({
         startY: y,
+
         head: [['#','Nama Barang','Merek','Total Keluar','Transaksi']],
+
         body: <?= json_encode($pdf_terlaris ?: [['','Belum ada data','','','']]) ?>,
 
         styles: {
             fontSize: 8,
-            cellPadding: 3,
+            cellPadding: 4,
             textColor: COLORS.text,
             lineColor: COLORS.line,
-            lineWidth: 0.2
+            lineWidth: 0.2,
+            overflow:'linebreak',
+            cellWidth:'wrap'
         },
 
         headStyles: {
-            fillColor: COLORS.primary,
-            textColor: [255,255,255],
-            fontStyle: 'bold',
-            halign: 'left'
+            fillColor: [248,250,252],
+            textColor: COLORS.text,
+            lineColor: COLORS.line,
+            fontStyle:'bold'
         },
 
         alternateRowStyles: {
-            fillColor: COLORS.bg
-        },
-
-        bodyStyles: {
-            valign: 'middle'
+            fillColor: [252,252,252]
         },
 
         columnStyles: {
@@ -739,9 +751,9 @@ function cetakPDF() {
         margin: { left:14, right:14 }
     });
 
-    y = doc.lastAutoTable.finalY + 14;
+    y = doc.lastAutoTable.finalY + 20;
 
-    // ── REKAP HARIAN ─────────────────────
+    // ── REKAP HARIAN ────────────────────
     sectionTitle(
         'Rekap Harian',
         'Ringkasan barang masuk dan keluar.'
@@ -761,24 +773,30 @@ function cetakPDF() {
 
     doc.autoTable({
         startY: y,
+
         head: [['Tanggal','Barang Masuk','Barang Keluar']],
+
         body: <?= json_encode($pdf_harian ?: [['Belum ada data','','']]) ?>,
 
         styles: {
             fontSize:8,
-            cellPadding:3,
+            cellPadding:4,
             textColor:COLORS.text,
             lineColor:COLORS.line,
-            lineWidth:0.2
+            lineWidth:0.2,
+            overflow:'linebreak',
+            cellWidth:'wrap'
         },
 
         headStyles: {
-            fillColor:COLORS.primary,
-            textColor:[255,255,255]
+            fillColor:[248,250,252],
+            textColor:COLORS.text,
+            lineColor:COLORS.line,
+            fontStyle:'bold'
         },
 
         alternateRowStyles: {
-            fillColor:COLORS.bg
+            fillColor:[252,252,252]
         },
 
         columnStyles: {
@@ -789,9 +807,9 @@ function cetakPDF() {
         margin:{ left:14, right:14 }
     });
 
-    y = doc.lastAutoTable.finalY + 14;
+    y = doc.lastAutoTable.finalY + 20;
 
-    // ── RIWAYAT BARANG MASUK ─────────────
+    // ── RIWAYAT BARANG MASUK ────────────
     sectionTitle(
         'Riwayat Barang Masuk',
         'Aktivitas stok masuk terbaru.'
@@ -827,24 +845,30 @@ function cetakPDF() {
 
     doc.autoTable({
         startY: y,
+
         head: [['Tanggal','Nama Barang','Jumlah','Keterangan']],
+
         body: <?= json_encode($riwayat_masuk_pdf ?: [['Belum ada data','','','']]) ?>,
 
         styles: {
             fontSize:7.5,
-            cellPadding:2.8,
+            cellPadding:3.5,
             textColor:COLORS.text,
             lineColor:COLORS.line,
-            lineWidth:0.2
+            lineWidth:0.2,
+            overflow:'linebreak',
+            cellWidth:'wrap'
         },
 
         headStyles: {
-            fillColor:COLORS.primary,
-            textColor:[255,255,255]
+            fillColor:[248,250,252],
+            textColor:COLORS.text,
+            lineColor:COLORS.line,
+            fontStyle:'bold'
         },
 
         alternateRowStyles: {
-            fillColor:COLORS.bg
+            fillColor:[252,252,252]
         },
 
         columnStyles: {
@@ -854,9 +878,9 @@ function cetakPDF() {
         margin:{ left:14, right:14 }
     });
 
-    y = doc.lastAutoTable.finalY + 14;
+    y = doc.lastAutoTable.finalY + 20;
 
-    // ── RIWAYAT BARANG KELUAR ────────────
+    // ── RIWAYAT BARANG KELUAR ───────────
     sectionTitle(
         'Riwayat Barang Keluar',
         'Aktivitas stok keluar terbaru.'
@@ -892,24 +916,30 @@ function cetakPDF() {
 
     doc.autoTable({
         startY: y,
+
         head: [['Tanggal','Nama Barang','Jumlah','Keterangan']],
+
         body: <?= json_encode($riwayat_keluar_pdf ?: [['Belum ada data','','','']]) ?>,
 
         styles: {
             fontSize:7.5,
-            cellPadding:2.8,
+            cellPadding:3.5,
             textColor:COLORS.text,
             lineColor:COLORS.line,
-            lineWidth:0.2
+            lineWidth:0.2,
+            overflow:'linebreak',
+            cellWidth:'wrap'
         },
 
         headStyles: {
-            fillColor:COLORS.primary,
-            textColor:[255,255,255]
+            fillColor:[248,250,252],
+            textColor:COLORS.text,
+            lineColor:COLORS.line,
+            fontStyle:'bold'
         },
 
         alternateRowStyles: {
-            fillColor:COLORS.bg
+            fillColor:[252,252,252]
         },
 
         columnStyles: {
@@ -919,18 +949,16 @@ function cetakPDF() {
         margin:{ left:14, right:14 }
     });
 
-    // ── FOOTER ───────────────────────────
+    // ── FOOTER ──────────────────────────
     const totalPages = doc.internal.getNumberOfPages();
 
     for (let i = 1; i <= totalPages; i++) {
 
         doc.setPage(i);
 
-        // garis footer
         doc.setDrawColor(...COLORS.line);
-        doc.line(14, 285, 196, 285);
+        doc.line(14, 287, 196, 287);
 
-        // kiri
         doc.setFont('helvetica','normal');
         doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.sub);
@@ -938,19 +966,18 @@ function cetakPDF() {
         doc.text(
             'Generated by Putra Surya Agung System',
             14,
-            289
+            291
         );
 
-        // kanan
         doc.text(
             `Page ${i} / ${totalPages}`,
             196,
-            289,
+            291,
             { align:'right' }
         );
     }
 
-    // ── SAVE ─────────────────────────────
+    // ── SAVE ────────────────────────────
     doc.save(`Laporan_Analisis_${periode}_<?= date("Ymd") ?>.pdf`);
 }
 </script>
