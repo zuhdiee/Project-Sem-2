@@ -54,7 +54,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <!-- Transaksi Barang -->
             <a href="transaksi_barang.php" 
                class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'transaksi_barang.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1 5h12m-9 0a1 1 0 102 0m6 0a1 1 0 102 0" />
+                </svg>
                 <span>Transaksi Barang</span>
             </a>
         </div>
