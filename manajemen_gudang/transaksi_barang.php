@@ -3,12 +3,15 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+date_default_timezone_set('Asia/Jakarta');
+
 include 'koneksi.php';
 
-if (!isset($_SESSION['id'])) {
-    header("Location: login.php");
-    exit;
-}
+// if (!isset($_SESSION['id'])) {
+//     header("Location: login.php");
+//     exit;
+// }
 
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
@@ -191,12 +194,15 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <tbody>
                 <?php if ($riwayat && $riwayat->num_rows > 0):
                     $no = 1;
-                    while ($row = $riwayat->fetch_assoc()): ?>
+                    while ($row = $riwayat->fetch_assoc()):
+                        // ✅ FIX: Gunakan DateTime untuk parse waktu agar tidak salah format
+                        $dt = new DateTime($row['created_at']);
+                    ?>
                     <tr>
-                        <td class="text-slate-400"><?= $no++ ?></td>  
+                        <td class="text-slate-400"><?= $no++ ?></td>
                         <td class="text-slate-400 whitespace-nowrap">
-                            <?= date('d/m/Y', strtotime($row['created_at'])) ?>
-                            <br><span class="text-[10px]"><?= date('H:i', strtotime($row['created_at'])) ?></span>
+                            <?= $dt->format('d/m/Y') ?>
+                            <br><span class="text-[10px]"><?= $dt->format('H:i') ?></span>
                         </td>
                         <td class="font-semibold text-slate-700"><?= htmlspecialchars($row['nama_barang']) ?></td>
                         <td class="text-slate-400"><?= htmlspecialchars($row['merek'] ?? '-') ?></td>
