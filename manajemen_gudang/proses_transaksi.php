@@ -1,16 +1,15 @@
 <?php
-// ─────────────────────────────────────────────────────────────
-//  proses_transaksi.php
-//  Menangani 2 aksi:
-//    1. aksi = transaksi  → catat barang masuk/keluar (stok lama)
-//    2. aksi = barang_baru → tambah barang baru sekaligus catat stok awal
-// ─────────────────────────────────────────────────────────────
 if (session_status() === PHP_SESSION_NONE) session_start();
+
+date_default_timezone_set('Asia/Jakarta');
+
 include 'koneksi.php';
 
-if (!isset($_SESSION['id'])) {
-    header("Location: login.php"); exit;
-}
+// if (!isset($_SESSION['id'])) {
+//     header("Location: login.php");
+//     exit;
+// }
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: transaksi_barang.php"); exit;
 }
@@ -76,8 +75,8 @@ if ($aksi === 'transaksi') {
         header("Location: transaksi_barang.php"); exit;
     }
 
-    // Tentukan waktu transaksi
-    $created_at = $tanggal ? date('Y-m-d H:i:s', strtotime($tanggal)) : date('Y-m-d H:i:s');
+    // ✅ FIX: Tanggal dari input user + jam WIB saat submit
+    $created_at = ($tanggal !== '' ? $tanggal : date('Y-m-d')) . ' ' . date('H:i:s');
 
     // Transaksi DB
     $conn->begin_transaction();
@@ -85,7 +84,6 @@ if ($aksi === 'transaksi') {
         $id_transaksi = generateIdTrx($conn);
 
         // Insert ke transaksi_stok
-        // Kolom DB: id_transaksi, id_barang, jenis, jumlah, keterangan, id_user, created_at, supplier, no_struk
         $stmt = $conn->prepare("
             INSERT INTO transaksi_stok
                 (id_transaksi, id_barang, jenis, jumlah, keterangan, id_user, created_at, supplier, no_struk)
@@ -105,8 +103,6 @@ if ($aksi === 'transaksi') {
         $stmt->execute();
         $stmt->close();
 
-        // Catatan: UPDATE stok barang ditangani otomatis oleh trigger `after_transaksi_insert` di DB.
-        // Tidak perlu query UPDATE manual di sini.
 
         $conn->commit();
         $label = $jenis === 'masuk' ? 'masuk' : 'keluar';
@@ -144,7 +140,8 @@ if ($aksi === 'barang_baru') {
         header("Location: transaksi_barang.php"); exit;
     }
 
-    $created_at = $tanggal ? date('Y-m-d H:i:s', strtotime($tanggal)) : date('Y-m-d H:i:s');
+    // ✅ FIX: Tanggal dari input user + jam WIB saat submit
+    $created_at = ($tanggal !== '' ? $tanggal : date('Y-m-d')) . ' ' . date('H:i:s');
 
     $conn->begin_transaction();
     try {
@@ -202,7 +199,6 @@ if ($aksi === 'barang_baru') {
     }
 
     // Redirect ke data_barang.php agar barang baru langsung terlihat di tabel inventaris.
-    // Transaksi stok-nya tetap tercatat dan muncul di transaksi_barang.php.
     header("Location: data_barang.php"); exit;
 }
 
