@@ -5,7 +5,7 @@ $role = $_SESSION['role'] ?? '';
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
-<aside class="w-72 bg-[#1e3a8a] text-white flex flex-col p-6 h-screen shrink-0 rounded-r-[30px] shadow-[10px_0_30px_-5px_rgba(0,0,0,0.3)] z-10">
+<aside class="w-72 bg-[#1e3a8a] text-white flex flex-col p-6 h-screen shrink-0 rounded-r-[30px] shadow-[10px_0_30px_-5px_rgba(0,0,0,0.3)] z-20">
     
     <!-- Logo Section -->
     <div class="flex items-center gap-3 mb-12 px-2">

@@ -25,7 +25,7 @@ if ($initials === '') $initials = 'US';
 ?>
 
 <!-- Header -->
-<header class="h-16 flex items-center justify-between px-8 bg-white/95 backdrop-blur-md absolute top-0 left-0 w-full z-0 border-b border-slate-100 shadow-sm">
+<header class="h-16 flex items-center justify-between px-8 bg-white/95 backdrop-blur-md absolute top-0 left-0 w-full z-10 border-b border-slate-100 shadow-sm">
 
     <!-- Kiri: tanggal & waktu -->
     <div class="ml-80 flex items-center gap-2 text-slate-400">
