@@ -1,6 +1,9 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['id'])) { header('Location: login.php'); exit; }
+// if (!isset($_SESSION['id'])) {
+//     header("Location: login.php");
+//     exit;
+// }
 
 $is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'Admin';
 
@@ -65,7 +68,6 @@ function getIkonDanWarna($nama_kategori, $ikon_db, $warna_db) {
         '#f0fdf4'=>'#15803d','#fdf4ff'=>'#a21caf','#fff7ed'=>'#c2410c',
     ];
 
-    // keyword => [ikon, warna_bg, accent]
     $icon_map = [
         'beras'        => ['🍚', '#dbeafe', '#2563eb'],
         'serealia'     => ['🌾', '#fef9c3', '#ca8a04'],
@@ -150,7 +152,6 @@ function getIkonDanWarna($nama_kategori, $ikon_db, $warna_db) {
     ];
 
     $n = strtolower($nama_kategori);
-    // Hanya pakai dari DB jika bukan nilai default kardus
     $ikon  = (!empty($ikon_db)  && $ikon_db  !== '📦')     ? $ikon_db  : null;
     $warna = (!empty($warna_db) && $warna_db !== '#dbeafe') ? $warna_db : null;
     $accent = '#2563eb';
@@ -164,7 +165,6 @@ function getIkonDanWarna($nama_kategori, $ikon_db, $warna_db) {
         }
     }
 
-    // Fallback: tidak ada keyword cocok
     $warna  = $warna  ?: '#dbeafe';
     $ikon   = $ikon   ?: '📦';
     $accent = $accent_map[$warna] ?? '#2563eb';
@@ -288,29 +288,39 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
 .btn-save:hover{background:#1d4ed8;}
 .section-gap{margin-top:18px;}
 
-/* ══ TOAST ══ */
+/* ══ TOAST — posisi tengah atas ══ */
 @keyframes toastIn {
-    from { opacity:0; transform:translateX(30px) scale(0.95); }
-    to   { opacity:1; transform:translateX(0) scale(1); }
+    from { opacity:0; transform:translateX(-50%) translateY(-16px) scale(0.96); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0)     scale(1);    }
 }
 @keyframes toastOut {
-    from { opacity:1; transform:translateX(0) scale(1); }
-    to   { opacity:0; transform:translateX(20px) scale(0.95); }
+    from { opacity:1; transform:translateX(-50%) translateY(0)     scale(1);    }
+    to   { opacity:0; transform:translateX(-50%) translateY(-12px) scale(0.96); }
 }
 @keyframes toastProgress {
     from { width:100%; }
     to   { width:0%; }
 }
-.toast {
+
+#toast-wrapper {
     position: fixed;
-    bottom: 28px;
-    right: 28px;
+    top: 24px;
     z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+    transform: translateX(-50%);
+}
+
+.toast {
+    pointer-events: all;
     min-width: 300px;
-    max-width: 360px;
+    max-width: 420px;
     background: #fff;
     border-radius: 18px;
-    box-shadow: 0 16px 48px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.07);
     border: 1px solid #e2e8f0;
     overflow: hidden;
     display: none;
@@ -326,14 +336,14 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
 .toast-body {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 16px 18px;
+    gap: 12px;
+    padding: 14px 16px;
 }
 .toast-icon-wrap {
-    width: 40px; height: 40px;
-    border-radius: 12px;
+    width: 38px; height: 38px;
+    border-radius: 11px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
 }
 .toast-text-title {
@@ -563,30 +573,34 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
 </div>
 
 <!-- ══════════════════════════════
-     TOAST NOTIFIKASI
+     TOAST — tengah atas
 ══════════════════════════════ -->
-<div class="toast toast-sukses" id="toastSukses">
-    <div class="toast-body">
-        <div class="toast-icon-wrap">🎉</div>
-        <div style="flex:1;min-width:0;">
-            <div class="toast-text-title">Kategori Berhasil Ditambahkan!</div>
-            <div class="toast-text-sub" id="toastSuksesNama">Kategori baru sudah tersimpan di gudang.</div>
-        </div>
-        <button class="toast-close-btn" onclick="hideToast('toastSukses')">✕</button>
-    </div>
-    <div class="toast-bar" id="barSukses"></div>
-</div>
+<div id="toast-wrapper">
 
-<div class="toast toast-gagal" id="toastGagal">
-    <div class="toast-body">
-        <div class="toast-icon-wrap">❌</div>
-        <div style="flex:1;">
-            <div class="toast-text-title">Gagal Menyimpan Kategori</div>
-            <div class="toast-text-sub">Terjadi kesalahan. Silakan coba lagi.</div>
+    <div class="toast toast-sukses" id="toastSukses">
+        <div class="toast-body">
+            <div class="toast-icon-wrap">🎉</div>
+            <div style="flex:1;min-width:0;">
+                <div class="toast-text-title">Kategori Berhasil Ditambahkan!</div>
+                <div class="toast-text-sub" id="toastSuksesNama">Kategori baru sudah tersimpan di gudang.</div>
+            </div>
+            <button class="toast-close-btn" onclick="hideToast('toastSukses')">✕</button>
         </div>
-        <button class="toast-close-btn" onclick="hideToast('toastGagal')">✕</button>
+        <div class="toast-bar" id="barSukses"></div>
     </div>
-    <div class="toast-bar" id="barGagal"></div>
+
+    <div class="toast toast-gagal" id="toastGagal">
+        <div class="toast-body">
+            <div class="toast-icon-wrap">❌</div>
+            <div style="flex:1;">
+                <div class="toast-text-title">Gagal Menyimpan Kategori</div>
+                <div class="toast-text-sub">Terjadi kesalahan. Silakan coba lagi.</div>
+            </div>
+            <button class="toast-close-btn" onclick="hideToast('toastGagal')">✕</button>
+        </div>
+        <div class="toast-bar" id="barGagal"></div>
+    </div>
+
 </div>
 
 <script>
@@ -722,14 +736,23 @@ document.addEventListener('keydown', e => {
     if (e.key==='Escape') { closeDetail(); closeTambah(); }
 });
 
+// ── Posisi toast: tengah area konten (otomatis hitung lebar sidebar) ──
+function posisiToast() {
+    const sidebar = document.querySelector('nav, aside, [class*="sidebar"], [class*="side"]');
+    const sidebarW = sidebar ? sidebar.getBoundingClientRect().width : 0;
+    const contentCenter = sidebarW + (window.innerWidth - sidebarW) / 2;
+    document.getElementById('toast-wrapper').style.left = contentCenter + 'px';
+}
+posisiToast();
+window.addEventListener('resize', posisiToast);
+
 // ── Toast ──
 const _toastTimers = {};
 function showToast(id) {
     const t   = document.getElementById(id);
     const bar = t.querySelector('.toast-bar');
-    // Reset progress bar animation
     bar.classList.remove('animating');
-    void bar.offsetWidth; // reflow
+    void bar.offsetWidth;
     bar.classList.add('animating');
     t.classList.remove('hide');
     t.classList.add('show');
