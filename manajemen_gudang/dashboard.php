@@ -105,9 +105,30 @@ for ($i = 5; $i >= 0; $i--) {
 
         <div class="p-8 pt-20">
             <?php if (isset($_GET['pesan']) && $_GET['pesan'] === 'akses_ditolak'): ?>
-            <div style="background:#fff4f4;border:1px solid #fecaca;color:#7f1d1d;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:16px;">
-                ✕ Akses ditolak — Anda tidak memiliki izin untuk membuka halaman ini.
+            <div id="toast-container" style="position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;">
+                <div id="toast-akses" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:16px;font-size:12.5px;font-weight:600;min-width:320px;max-width:520px;box-shadow:0 12px 40px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);pointer-events:all;background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1.5px solid #fca5a5;color:#9f1239;position:relative;overflow:hidden;opacity:0;transform:translateY(-20px) scale(0.96);transition:opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),transform 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+                    <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;background:#fecdd3;">🚫</div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;font-weight:700;margin-bottom:2px;">Akses Ditolak!</div>
+                        <div style="font-size:11px;font-weight:500;opacity:0.85;line-height:1.4;">Anda tidak memiliki izin untuk membuka halaman ini.</div>
+                    </div>
+                    <button onclick="tutupToastAkses()" style="width:22px;height:22px;border-radius:6px;border:none;cursor:pointer;background:rgba(0,0,0,0.07);color:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;">✕</button>
+                    <div style="position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 16px 16px;background:linear-gradient(90deg,#fb7185,#e11d48);animation:toast-bar 4.5s linear forwards;"></div>
+                </div>
             </div>
+            <style>@keyframes toast-bar{from{width:100%}to{width:0%}}</style>
+            <script>
+                window.addEventListener('DOMContentLoaded', function() {
+                    const t = document.getElementById('toast-akses');
+                    setTimeout(function() { t.style.opacity='1'; t.style.transform='translateY(0) scale(1)'; }, 100);
+                    setTimeout(function() { tutupToastAkses(); }, 4500);
+                });
+                function tutupToastAkses() {
+                    const t = document.getElementById('toast-akses');
+                    t.style.opacity='0'; t.style.transform='translateY(-16px) scale(0.96)';
+                    t.style.transition='opacity 0.25s ease,transform 0.25s ease';
+                }
+            </script>
             <?php endif; ?>
             <div class="flex justify-between items-start mb-6">
                 <div>
