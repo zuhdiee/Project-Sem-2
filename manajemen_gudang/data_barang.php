@@ -73,7 +73,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         @keyframes toast-bar{from{width:100%}to{width:0%}}
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden md:flex-row flex-col">
 
 <!-- ── Toast Container ── -->
 <div id="toast-container"></div>
@@ -153,7 +153,7 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
     <main class="flex-1 flex flex-col overflow-y-auto">
         <?php include 'include/header.php'; ?>
 
-        <div class="p-8 pt-20">
+        <div class="p-4 pt-16 md:p-8 md:pt-20">
 
             <?php /* Flash messages handled by toast – see #toast-container below */ ?>
 
@@ -164,7 +164,7 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-5 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
                 <!-- Card: Total Variasi -->
                 <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-blue-500">

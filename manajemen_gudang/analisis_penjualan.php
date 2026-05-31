@@ -171,14 +171,14 @@ if ($rb_res) while ($r = $rb_res->fetch_assoc()) $rekap_bulanan_rows[] = $r;
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden md:flex-row flex-col">
 
 <?php include 'include/side_panel.php'; ?>
 
 <main class="flex-1 flex flex-col overflow-y-auto">
     <?php include 'include/header.php'; ?>
 
-    <div class="p-8 pt-20">
+    <div class="p-4 pt-16 md:p-8 md:pt-20">
 
         <!-- ── Header Row ──────────────────────────────────────── -->
         <div class="flex flex-wrap justify-between items-end gap-4 mb-6">
@@ -290,10 +290,10 @@ if ($rb_res) while ($r = $rb_res->fetch_assoc()) $rekap_bulanan_rows[] = $r;
         </div>
 
         <!-- ── Barang Terlaris + Rekap ─────────────────────────── -->
-        <div class="grid grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             <!-- Terlaris -->
-            <div class="col-span-2 modern-card overflow-hidden">
+            <div class="lg:col-span-2 modern-card overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h2 class="text-[14px] font-bold text-slate-800">Barang Terlaris</h2>

@@ -131,30 +131,30 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 @keyframes toast-bar{from{width:100%}to{width:0%}}
 </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden md:flex-row flex-col">
 
 <?php include 'include/side_panel.php'; ?>
 
-<main class="flex-1 flex flex-col overflow-y-auto">
+<main class="flex-1 flex flex-col overflow-y-auto pt-14 md:pt-0">
 <?php include 'include/header.php'; ?>
 
-<div class="p-8 pt-20">
+<div class="p-4 md:p-8 md:pt-20 pt-4">
 
     <!-- Toast notifications ditampilkan via JS di bawah -->
 
     <!-- Page Header -->
-    <div class="mb-6 flex items-start justify-between">
+    <div class="mb-5 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-            <h1 class="text-[20px] font-bold text-slate-800 tracking-tight">Transaksi Barang</h1>
+            <h1 class="text-[18px] md:text-[20px] font-bold text-slate-800 tracking-tight">Transaksi Barang</h1>
             <p class="text-slate-400 text-[11px] mt-0.5">Kelola barang masuk dan keluar gudang dalam satu tempat.</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
             <?php if ($_SESSION['role'] === 'Admin'): ?>
-                <button onclick="openModal('masuk')" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
+                <button onclick="openModal('masuk')" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
                     Barang Masuk
                 </button>
-                <button onclick="openModal('keluar')" class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-rose-100 transition-all">
+                <button onclick="openModal('keluar')" class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-3 md:px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-rose-100 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-width="2.5" stroke-linecap="round"/></svg>
                     Barang Keluar
                 </button>
@@ -164,7 +164,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
     <!-- Riwayat -->
     <div class="content-card">
-        <div class="flex items-center justify-between mb-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4 md:mb-5">
             <h2 class="text-[14px] font-bold text-slate-800 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-blue-600 rounded-full"></span>
                 Riwayat Transaksi
