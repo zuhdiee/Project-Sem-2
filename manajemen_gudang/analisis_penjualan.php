@@ -760,23 +760,51 @@ function cetakPDF() {
     );
 
     <?php
+    $pdf_harini = [];
+    foreach ($rekap_harini_rows as $r) {
+        $pdf_harini[] = [
+            date('d M Y', strtotime($r['tgl'])),
+            number_format($r['masuk']),
+            number_format($r['keluar'])
+        ];
+    }
+    
     $pdf_harian = [];
-
-    foreach ($rekap_harian_rows as $rh) {
+    foreach ($rekap_harian_rows as $r) {
         $pdf_harian[] = [
-            date('d M Y', strtotime($rh['tgl'])),
-            number_format($rh['masuk']),
-            number_format($rh['keluar'])
+            date('d M Y', strtotime($r['tgl'])),
+            number_format($r['masuk']),
+            number_format($r['keluar'])
+        ];
+    }
+    
+    $pdf_bulanan = [];
+    foreach ($rekap_bulanan_rows as $r) {
+        $pdf_bulanan[] = [
+            $r['bulan_label'],
+            number_format($r['masuk']),
+            number_format($r['keluar'])
         ];
     }
     ?>
-
+    
+    const modeRekap = document.getElementById('lblRekap').textContent;
+    
+    let rekapHead = [['Tanggal','Barang Masuk','Barang Keluar']];
+    let rekapBody = <?= json_encode($pdf_harian ?: [['Belum ada data','','']]) ?>;
+    
+    if (modeRekap === '1 Hari') {
+        rekapBody = <?= json_encode($pdf_harini ?: [['Belum ada data','','']]) ?>;
+    }
+    else if (modeRekap === '1 Bulan') {
+        rekapHead = [['Bulan','Barang Masuk','Barang Keluar']];
+        rekapBody = <?= json_encode($pdf_bulanan ?: [['Belum ada data','','']]) ?>;
+    }
+    
     doc.autoTable({
         startY: y,
-
-        head: [['Tanggal','Barang Masuk','Barang Keluar']],
-
-        body: <?= json_encode($pdf_harian ?: [['Belum ada data','','']]) ?>,
+        head: rekapHead,
+        body: rekapBody,
 
         styles: {
             fontSize:8,
