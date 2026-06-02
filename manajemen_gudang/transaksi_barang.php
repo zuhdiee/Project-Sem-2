@@ -39,10 +39,20 @@ $stat_masuk  = $conn->query("SELECT COALESCE(SUM(jumlah),0) as total, COUNT(*) a
 $stat_keluar = $conn->query("SELECT COALESCE(SUM(jumlah),0) as total, COUNT(*) as count FROM transaksi_stok WHERE jenis='keluar' AND DATE(created_at)=CURDATE()")->fetch_assoc();
 $stat_total  = $conn->query("SELECT COUNT(*) as count FROM transaksi_stok WHERE DATE(created_at)=CURDATE()")->fetch_assoc();
 
-// ── Riwayat ───────────────────────────────────────────────────
-$filter_jenis = in_array($_GET['jenis'] ?? '', ['masuk','keluar']) ? $_GET['jenis'] : 'all';
-$where = $filter_jenis !== 'all' ? "WHERE ts.jenis='" . $conn->real_escape_string($filter_jenis) . "'" : '';
+// ── Filter Periode & Jenis ────────────────────────────────────
+$filter_periode = in_array($_GET['periode'] ?? '', ['1', '7', '30']) ? $_GET['periode'] : '7';
+$filter_jenis   = in_array($_GET['jenis']   ?? '', ['masuk', 'keluar']) ? $_GET['jenis'] : 'all';
 
+$where_parts = ["ts.created_at >= DATE_SUB(NOW(), INTERVAL {$filter_periode} DAY)"];
+if ($filter_jenis !== 'all') {
+    $where_parts[] = "ts.jenis='" . $conn->real_escape_string($filter_jenis) . "'";
+}
+$where = 'WHERE ' . implode(' AND ', $where_parts);
+
+// Label periode untuk tampilan
+$periode_label = ['1' => 'Hari Ini', '7' => '7 Hari Terakhir', '30' => '1 Bulan Terakhir'];
+
+// ── Riwayat ───────────────────────────────────────────────────
 $riwayat = $conn->query("
     SELECT ts.id_transaksi, ts.created_at, ts.jenis, ts.jumlah,
            ts.supplier, ts.no_struk, ts.keterangan,
@@ -52,7 +62,8 @@ $riwayat = $conn->query("
     JOIN barang b ON ts.id_barang = b.id_barang
     JOIN users  u ON ts.id_user   = u.id
     $where
-    ORDER BY ts.created_at DESC LIMIT 50
+    ORDER BY ts.created_at DESC
+    LIMIT 200
 ");
 ?>
 <!DOCTYPE html>
@@ -98,10 +109,16 @@ tbody tr{border-bottom:1px solid #f8fafc;transition:background 0.15s}
 tbody tr:hover{background:#f8fafc}
 tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:middle}
 
-.filter-tab{padding:6px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid transparent;cursor:pointer;transition:all 0.2s;background:#f8fafc;color:#94a3b8;text-decoration:none}
+/* ── Filter Tabs ── */
+.filter-tab{padding:6px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid transparent;cursor:pointer;transition:all 0.2s;background:#f8fafc;color:#94a3b8;text-decoration:none;white-space:nowrap}
+.filter-tab:hover{color:#475569;background:#f1f5f9}
 .filter-tab.f-all   {background:#1e293b;color:white}
 .filter-tab.f-masuk {background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
 .filter-tab.f-keluar{background:#ffe4e6;color:#be123c;border-color:#fecdd3}
+
+/* ── Periode Dropdown ── */
+.periode-select{padding:6px 28px 6px 12px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid #e2e8f0;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;-webkit-appearance:none;appearance:none;color:#334155;cursor:pointer;outline:none;transition:all 0.2s}
+.periode-select:focus{border-color:#2563eb;background-color:white;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
 
 .stat-card{border-radius:16px;padding:20px 22px;background:white;border:1px solid #e2e8f0}
 
@@ -109,6 +126,10 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 .stok-ok  {color:#059669;font-weight:700}
 .stok-low {color:#f59e0b;font-weight:700}
 .stok-danger{color:#e11d48;font-weight:700}
+
+/* ── Empty State ── */
+.empty-state{padding:56px 0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty-icon{width:56px;height:56px;border-radius:16px;background:#f1f5f9;display:flex;align-items:center;justify-content:center}
 
 /* ── Toast Notification ── */
 #toast-container{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
@@ -140,8 +161,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <div class="p-4 md:p-8 md:pt-20 pt-4">
 
-    <!-- Toast notifications ditampilkan via JS di bawah -->
-
     <!-- Page Header -->
     <div class="mb-5 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -149,7 +168,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
             <p class="text-slate-400 text-[11px] mt-0.5">Kelola barang masuk dan keluar gudang dalam satu tempat.</p>
         </div>
         <div class="flex gap-2 flex-wrap">
-            <?php if ($_SESSION['role'] === 'Admin'): ?>
+            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
                 <button onclick="openModal('masuk')" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2.5 rounded-xl text-[11px] font-bold shadow-lg shadow-blue-100 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
                     Barang Masuk
@@ -164,15 +183,25 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
     <!-- Riwayat -->
     <div class="content-card">
+
+        <!-- Header + Filter -->
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4 md:mb-5">
             <h2 class="text-[14px] font-bold text-slate-800 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-blue-600 rounded-full"></span>
                 Riwayat Transaksi
             </h2>
-            <div class="flex items-center gap-2">
-                <a href="?jenis=all"    class="filter-tab <?= $filter_jenis==='all'    ? 'f-all'    : '' ?>">Semua</a>
-                <a href="?jenis=masuk"  class="filter-tab <?= $filter_jenis==='masuk'  ? 'f-masuk'  : '' ?>">Masuk</a>
-                <a href="?jenis=keluar" class="filter-tab <?= $filter_jenis==='keluar' ? 'f-keluar' : '' ?>">Keluar</a>
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Dropdown Periode -->
+                <select class="periode-select"
+                        onchange="window.location.href='?periode='+this.value+'&jenis=<?= $filter_jenis ?>'">
+                    <option value="1"  <?= $filter_periode==='1'  ? 'selected' : '' ?>>Hari Ini</option>
+                    <option value="7"  <?= $filter_periode==='7'  ? 'selected' : '' ?>>7 Hari Terakhir</option>
+                    <option value="30" <?= $filter_periode==='30' ? 'selected' : '' ?>>1 Bulan Terakhir</option>
+                </select>
+                <!-- Filter Jenis -->
+                <a href="?periode=<?= $filter_periode ?>&jenis=all"    class="filter-tab <?= $filter_jenis==='all'    ? 'f-all'    : '' ?>">Semua</a>
+                <a href="?periode=<?= $filter_periode ?>&jenis=masuk"  class="filter-tab <?= $filter_jenis==='masuk'  ? 'f-masuk'  : '' ?>">Masuk</a>
+                <a href="?periode=<?= $filter_periode ?>&jenis=keluar" class="filter-tab <?= $filter_jenis==='keluar' ? 'f-keluar' : '' ?>">Keluar</a>
             </div>
         </div>
 
@@ -195,7 +224,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <?php if ($riwayat && $riwayat->num_rows > 0):
                     $no = 1;
                     while ($row = $riwayat->fetch_assoc()):
-                        // ✅ FIX: Gunakan DateTime untuk parse waktu agar tidak salah format
                         $dt = new DateTime($row['created_at']);
                     ?>
                     <tr>
@@ -213,8 +241,8 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                             <span class="badge badge-keluar">↓ Keluar</span>
                             <?php endif; ?>
                         </td>
-                        <td class="font-bold <?= $row['jenis']==='masuk' ? 'text-blue-600' : 'text-rose-500' ?>">
-                            <?= $row['jenis']==='masuk' ? '+' : '-' ?><?= number_format($row['jumlah'], 0) ?>
+                        <td class="font-bold <?= $row['jenis'] === 'masuk' ? 'text-blue-600' : 'text-rose-500' ?>">
+                            <?= $row['jenis'] === 'masuk' ? '+' : '-' ?><?= number_format($row['jumlah'], 0) ?>
                             <span class="text-[10px] font-normal text-slate-400"><?= $row['satuan'] ?></span>
                         </td>
                         <td><?= htmlspecialchars($row['supplier'] ?? '-') ?></td>
@@ -224,8 +252,29 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     <?php endwhile;
                 else: ?>
                     <tr>
-                        <td colspan="9" class="py-14 text-center text-slate-400 italic text-[12px]">
-                            Belum ada transaksi<?= $filter_jenis !== 'all' ? ' '.$filter_jenis : '' ?> yang tercatat.
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-slate-500 font-semibold text-[12px]">Belum ada transaksi</p>
+                                    <p class="text-slate-400 text-[11px] mt-0.5">
+                                        Tidak ada data transaksi
+                                        <?= $filter_jenis !== 'all' ? "<strong>{$filter_jenis}</strong> " : '' ?>
+                                        dalam <strong><?= strtolower($periode_label[$filter_periode]) ?></strong>.
+                                    </p>
+                                </div>
+                                <?php if ($filter_jenis !== 'all' || $filter_periode !== '30'): ?>
+                                <a href="?periode=30&jenis=all"
+                                   class="mt-1 text-[11px] text-blue-600 font-semibold hover:underline">
+                                    Lihat semua transaksi →
+                                </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -237,7 +286,8 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <?php include 'include/footer.php'; ?>
 </main>
- <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
+
+<?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
 <!-- ===== MODAL ===== -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
 <div class="modal-box" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -503,6 +553,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 </div>
 </div>
 <?php endif; ?>
+
 <!-- ===== TOAST CONTAINER ===== -->
 <div id="toast-container"></div>
 
@@ -532,10 +583,8 @@ function showToast(type, title, message) {
     `;
     container.appendChild(toast);
 
-    // Animate in
     requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
 
-    // Auto-dismiss setelah 4.5 detik
     const timer = setTimeout(() => dismissToast(toast), 4500);
     toast._timer = timer;
 }
@@ -560,7 +609,7 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 <?php endif; ?>
 
-const barangData = <?= json_encode(array_column($barang_list, null, 'id_barang')) ?>;
+const barangData  = <?= json_encode(array_column($barang_list, null, 'id_barang')) ?>;
 const kategoriData = <?= json_encode(array_column($kategori_list, null, 'id_kategori')) ?>;
 
 function findBarangByLabel(label) {
@@ -579,30 +628,19 @@ function findKategoriByLabel(label) {
 }
 
 function handleKategoriInput(input) {
-    const label = input.value;
-    const kategori = findKategoriByLabel(label);
-    const hidden = document.getElementById('nb_kategori_id');
-    hidden.value = kategori ? kategori.id_kategori : '';
+    const kategori = findKategoriByLabel(input.value);
+    document.getElementById('nb_kategori_id').value = kategori ? kategori.id_kategori : '';
 }
 
 function handleBarangInput(input, mode) {
-    const label = input.value;
-    const barang = findBarangByLabel(label);
+    const barang = findBarangByLabel(input.value);
     const hiddenId = document.getElementById(mode === 'masuk' ? 'input-barang-id-masuk' : 'input-barang-id-keluar');
     hiddenId.value = barang ? barang.id_barang : '';
 
     if (mode === 'masuk') {
-        if (barang) {
-            updateBarangInfoById(barang.id_barang);
-        } else {
-            document.getElementById('barang-info').classList.add('hidden');
-        }
+        barang ? updateBarangInfoById(barang.id_barang) : document.getElementById('barang-info').classList.add('hidden');
     } else {
-        if (barang) {
-            updateBarangInfoKeluarById(barang.id_barang);
-        } else {
-            document.getElementById('barang-info-keluar').classList.add('hidden');
-        }
+        barang ? updateBarangInfoKeluarById(barang.id_barang) : document.getElementById('barang-info-keluar').classList.add('hidden');
     }
 }
 
@@ -611,7 +649,6 @@ function openModal(jenis = 'masuk') {
     document.getElementById('modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
     switchTab(jenis);
-    // Set tanggal hari ini
     const today = new Date().toISOString().split('T')[0];
     const dl = document.getElementById('input-date-lama');
     const dk = document.getElementById('input-date-keluar');
@@ -629,27 +666,22 @@ function closeModalOnBg(e) {
 // ── Switch tab Masuk / Keluar ────────────────────────────────────
 function switchTab(jenis) {
     const isMasuk = jenis === 'masuk';
-
     const hdr = document.getElementById('modal-header');
     hdr.className = (isMasuk ? 'modal-header-masuk' : 'modal-header-keluar') + ' p-6 pb-4 flex-shrink-0';
     document.getElementById('modal-title').textContent = isMasuk ? 'Barang Masuk' : 'Barang Keluar';
-
     document.getElementById('tab-masuk').className  = 'tab-btn tab-masuk'  + (isMasuk  ? ' active' : '');
     document.getElementById('tab-keluar').className = 'tab-btn tab-keluar' + (!isMasuk ? ' active' : '');
-
     document.getElementById('panel-masuk').classList.toggle('hidden', !isMasuk);
     document.getElementById('panel-keluar').classList.toggle('hidden', isMasuk);
 }
 
-// ── Toggle Barang Lama / Barang Baru (hanya di panel Masuk) ─────
+// ── Toggle Barang Lama / Barang Baru ─────────────────────────────
 function switchMasukMode(mode) {
     const isLama = mode === 'lama';
     document.getElementById('form-lama').classList.toggle('hidden', !isLama);
     document.getElementById('form-baru').classList.toggle('hidden', isLama);
-
     const btnLama = document.getElementById('toggle-lama');
     const btnBaru = document.getElementById('toggle-baru');
-
     if (isLama) {
         btnLama.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all bg-white text-blue-700 shadow-sm';
         btnBaru.className = 'flex-1 py-2 text-[11px] font-bold rounded-lg transition-all text-slate-500';
@@ -659,49 +691,39 @@ function switchMasukMode(mode) {
     }
 }
 
-// ── Info barang untuk panel Masuk (barang lama) ──────────────────
+// ── Info barang panel Masuk ──────────────────────────────────────
 function updateBarangInfoById(id) {
     const info = document.getElementById('barang-info');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
-
     const b    = barangData[id];
     const stok = parseFloat(b.stok);
     const min  = parseFloat(b.stok_min);
-
     document.getElementById('satuan-hint').textContent = '(satuan: ' + b.satuan + ')';
-
     const elStok = document.getElementById('info-stok');
-    let cls  = 'stok-ok';
-    let text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
+    let cls = 'stok-ok', text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
     if (stok <= 0)        { cls = 'stok-danger'; text += ' ✕ Habis!'; }
     else if (stok <= min) { cls = 'stok-low';    text += ' ⚠ Tipis!'; }
-    elStok.className   = cls;
+    elStok.className = cls;
     elStok.textContent = text;
-
-    document.getElementById('info-stok-min').textContent = min.toLocaleString('id-ID') + ' ' + b.satuan;
-    document.getElementById('info-kategori').textContent = b.nama_kategori || '-';
+    document.getElementById('info-stok-min').textContent  = min.toLocaleString('id-ID') + ' ' + b.satuan;
+    document.getElementById('info-kategori').textContent  = b.nama_kategori || '-';
     info.classList.remove('hidden');
 }
 
-// ── Info barang untuk panel Keluar ──────────────────────────────
+// ── Info barang panel Keluar ─────────────────────────────────────
 function updateBarangInfoKeluarById(id) {
     const info = document.getElementById('barang-info-keluar');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
-
     const b    = barangData[id];
     const stok = parseFloat(b.stok);
     const min  = parseFloat(b.stok_min);
-
     document.getElementById('satuan-hint-keluar').textContent = '(satuan: ' + b.satuan + ')';
-
     const elStok = document.getElementById('info-stok-keluar');
-    let cls  = 'stok-ok';
-    let text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
+    let cls = 'stok-ok', text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
     if (stok <= 0)        { cls = 'stok-danger'; text += ' ✕ Habis!'; }
     else if (stok <= min) { cls = 'stok-low';    text += ' ⚠ Tipis! — hati-hati!'; }
-    elStok.className   = cls;
+    elStok.className = cls;
     elStok.textContent = text;
-
     document.getElementById('info-kategori-keluar').textContent = b.nama_kategori || '-';
     info.classList.remove('hidden');
 }
