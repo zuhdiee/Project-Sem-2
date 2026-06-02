@@ -199,13 +199,13 @@
                         </span>
                     </label>
 
-                    <a 
-                        href="https://wa.me/62081232641913?text=Halo%20Admin%2C%20saya%20lupa%20password%20akun%20PSA%20Logistic."
-                        target="_blank"
+                    <button 
+                        type="button"
+                        onclick="showLupaPassword()"
                         class="text-[11px] text-blue-700 hover:text-blue-900 font-semibold transition"
                     >
                         Lupa Password?
-                    </a>
+                    </button>
 
                 </div>
 
@@ -245,6 +245,40 @@
                     logoutNotification.remove();
                 }, 5000);
             }
+        });
+    </script>
+
+    <!-- Modal Lupa Password -->
+    <div id="modalLupaPassword" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+         style="background: rgba(15,30,60,0.55); backdrop-filter: blur(4px);">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+            </div>
+            <h3 class="text-[14px] font-bold text-slate-800 text-center mb-1">Lupa Password?</h3>
+            <p class="text-[12px] text-slate-500 text-center mb-5">Anda tidak dapat mereset password sendiri melalui sistem ini.</p>
+            <p class="text-[11px] text-slate-400 text-center mb-5">Silakan hubungi Admin secara langsung di luar sistem untuk mereset password Anda.</p>
+            <button onclick="tutupModalLupaPassword()"
+                    class="w-full py-2 text-[12px] font-bold text-white bg-[#1e3a8a] rounded-xl hover:bg-blue-800 transition">
+                Mengerti
+            </button>
+        </div>
+    </div>
+    <script>
+        function showLupaPassword() {
+            const m = document.getElementById('modalLupaPassword');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function tutupModalLupaPassword() {
+            const m = document.getElementById('modalLupaPassword');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+        document.getElementById('modalLupaPassword').addEventListener('click', function(e) {
+            if (e.target === this) tutupModalLupaPassword();
         });
     </script>
 
