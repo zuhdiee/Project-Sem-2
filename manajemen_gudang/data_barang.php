@@ -708,12 +708,12 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
     // ── Trigger dari PHP flash session ────────────────────────────
     <?php if ($flash_success): ?>
     window.addEventListener('DOMContentLoaded', function() {
-        showToast('ok', 'Berhasil! 🎉', <?= json_encode(htmlspecialchars($flash_success)) ?>);
+        showToast('ok', 'Berhasil!', <?= json_encode($flash_success) ?>);
     });
     <?php endif; ?>
     <?php if ($flash_error): ?>
     window.addEventListener('DOMContentLoaded', function() {
-        showToast('err', 'Terjadi Kesalahan', <?= json_encode(htmlspecialchars($flash_error)) ?>);
+        showToast('err', 'Terjadi Kesalahan', <?= json_encode($flash_error) ?>);
     });
     <?php endif; ?>
     </script>
