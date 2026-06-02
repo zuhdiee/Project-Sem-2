@@ -249,10 +249,18 @@
     </script>
 
     <!-- Modal Lupa Password -->
+    <style>
+        @keyframes modal-fadein  { from { opacity:0 } to { opacity:1 } }
+        @keyframes card-slidein  { from { transform:translateY(28px) scale(0.94); opacity:0 } to { transform:translateY(0) scale(1); opacity:1 } }
+        @keyframes icon-pop      { 0%{transform:scale(0.5) rotate(-10deg);opacity:0} 70%{transform:scale(1.12) rotate(4deg);opacity:1} 100%{transform:scale(1) rotate(0)} }
+        #modalLupaPassword       { animation: modal-fadein 0.22s ease both }
+        #modalLupaPassword .modal-card { animation: card-slidein 0.32s cubic-bezier(0.34,1.56,0.64,1) 0.05s both }
+        #modalLupaPassword .modal-icon { animation: icon-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.18s both }
+    </style>
     <div id="modalLupaPassword" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
-         style="background: rgba(15,30,60,0.55); backdrop-filter: blur(4px);">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+         style="background:rgba(15,30,60,0.55);">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 modal-card">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-4 modal-icon">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                 </svg>
