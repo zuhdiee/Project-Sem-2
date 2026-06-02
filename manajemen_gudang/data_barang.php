@@ -73,7 +73,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         @keyframes toast-bar{from{width:100%}to{width:0%}}
     </style>
 </head>
-<body class="flex h-screen overflow-hidden md:flex-row flex-col">
+<body class="flex h-screen overflow-hidden">
 
 <!-- ── Toast Container ── -->
 <div id="toast-container"></div>
@@ -153,7 +153,7 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
     <main class="flex-1 flex flex-col overflow-y-auto">
         <?php include 'include/header.php'; ?>
 
-        <div class="p-4 pt-16 md:p-8 md:pt-20">
+        <div class="p-8 pt-20">
 
             <?php /* Flash messages handled by toast – see #toast-container below */ ?>
 
@@ -164,7 +164,7 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-3 gap-5 mb-8">
 
                 <!-- Card: Total Variasi -->
                 <div class="modern-card p-5 flex items-center gap-4 border-l-4 border-l-blue-500">
@@ -427,54 +427,117 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
 
 <?php $kat_for_edit = mysqli_query($conn, "SELECT id_kategori, nama_kategori FROM kategori ORDER BY nama_kategori ASC"); ?>
     <div id="modalEdit" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
-         style="background: rgba(15,30,60,0.55); backdrop-filter: blur(4px);">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-            <h3 class="text-[16px] font-bold text-slate-800 text-center mb-2">Edit Barang</h3>
-            <form id="editForm" action="proses/edit_barang.php" method="POST" class="space-y-3">
+         style="background: rgba(15,30,60,0.55); backdrop-filter: blur(6px);">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden" style="box-shadow: 0 25px 60px rgba(37,99,235,0.18), 0 8px 24px rgba(0,0,0,0.12);">
+
+            <!-- Header biru -->
+            <div class="relative px-6 pt-6 pb-5" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <p class="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-0.5">Data Barang</p>
+                <h3 class="text-[20px] font-bold text-white">Edit Barang</h3>
+                <button type="button" onclick="closeEditModal()"
+                    class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-white transition"
+                    style="background: rgba(255,255,255,0.2);"
+                    onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Form body -->
+            <form id="editForm" action="proses/edit_barang.php" method="POST" class="px-6 py-5 space-y-4">
                 <input type="hidden" name="id_barang">
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Nama Barang</label>
-                    <input name="nama_barang" required class="w-full px-3 py-2 border rounded-lg">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Merek</label>
-                    <input name="merek" class="w-full px-3 py-2 border rounded-lg">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Kategori</label>
-                    <select name="id_kategori" required class="w-full px-3 py-2 border rounded-lg">
-                        <?php while ($k = mysqli_fetch_assoc($kat_for_edit)): ?>
-                            <option value="<?= $k['id_kategori'] ?>"><?= htmlspecialchars($k['nama_kategori']) ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Satuan</label>
-                        <input name="satuan" required class="w-full px-3 py-2 border rounded-lg">
+                        <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Nama Barang</label>
+                        <input name="nama_barang" required placeholder="Nama barang..."
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Stok Minimum</label>
-                        <input name="stok_min" type="number" step="1" class="w-full px-3 py-2 border rounded-lg">
+                        <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Merek</label>
+                        <input name="merek" placeholder="Merek..."
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
                     </div>
                 </div>
+
+                <div>
+                    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Kategori</label>
+                    <!-- Hidden input untuk submit form -->
+                    <input type="hidden" name="id_kategori" id="edit_id_kategori">
+                    <div class="relative" id="customKategoriWrapper">
+                        <!-- Trigger button -->
+                        <button type="button" id="kategoriTrigger"
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition text-left flex items-center justify-between cursor-pointer"
+                            onclick="toggleKategoriDropdown(event)">
+                            <span id="kategoriLabel" class="text-slate-400">-- Pilih Kategori --</span>
+                            <svg id="kategoriChevron" class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <!-- Dropdown list (selalu ke bawah) -->
+                        <div id="kategoriDropdown"
+                            class="absolute left-0 right-0 z-[999] hidden mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-y-auto"
+                            style="max-height: 220px; top: 100%;">
+                            <div class="py-1">
+                                <div class="px-3.5 py-2.5 text-[13px] text-slate-400 cursor-pointer hover:bg-slate-50 rounded-lg mx-1"
+                                     onclick="pilihKategori('', '-- Pilih Kategori --')">-- Pilih Kategori --</div>
+                                <?php while ($k = mysqli_fetch_assoc($kat_for_edit)): ?>
+                                <div class="px-3.5 py-2.5 text-[13px] font-medium text-slate-700 cursor-pointer hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-1 transition"
+                                     data-value="<?= htmlspecialchars($k['id_kategori'], ENT_QUOTES) ?>"
+                                     onclick="pilihKategori('<?= htmlspecialchars($k['id_kategori'], ENT_QUOTES) ?>', '<?= htmlspecialchars($k['nama_kategori'], ENT_QUOTES) ?>')">
+                                    <?= htmlspecialchars($k['nama_kategori']) ?>
+                                </div>
+                                <?php endwhile; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Harga Beli</label>
-                        <input name="harga_beli" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                        <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Satuan</label>
+                        <input name="satuan" required placeholder="pcs, kg, liter..."
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1">Harga Jual</label>
-                        <input name="harga_jual" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                        <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Stok Minimum</label>
+                        <input name="stok_min" type="number" step="1" placeholder="0"
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Stok</label>
-                    <input name="stok" type="number" step="1" class="w-full px-3 py-2 border rounded-lg">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Harga Beli</label>
+                        <input name="harga_beli" type="number" step="0.01" placeholder="0"
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
+                    </div>
+                    <div>
+                        <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Harga Jual</label>
+                        <input name="harga_jual" type="number" step="0.01" placeholder="0"
+                            class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
+                    </div>
                 </div>
-                <div class="flex gap-2 justify-end">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Simpan Perubahan</button>
+
+                <div>
+                    <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Stok</label>
+                    <input name="stok" type="number" step="1" placeholder="0"
+                        class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
+                </div>
+
+                <!-- Footer buttons -->
+                <div class="flex gap-3 pt-1">
+                    <button type="button" onclick="closeEditModal()"
+                        class="flex-1 py-2.5 text-[13px] font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-2.5 text-[13px] font-bold text-white rounded-xl transition"
+                        style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); box-shadow: 0 4px 14px rgba(37,99,235,0.35);"
+                        onmouseover="this.style.background='linear-gradient(135deg,#1d4ed8 0%,#1e40af 100%)'" onmouseout="this.style.background='linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)'">
+                        Simpan Perubahan
+                    </button>
                 </div>
             </form>
         </div>
@@ -487,16 +550,73 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
         f.id_barang.value = d.id || '';
         f.nama_barang.value = d.nama || '';
         f.merek.value = d.merek || '';
-        f.id_kategori.value = d.id_kategori || '';
         f.satuan.value = d.satuan || '';
         f.harga_beli.value = d.harga_beli || '';
         f.harga_jual.value = d.harga_jual || '';
         f.stok.value = d.stok || '';
         f.stok_min.value = d.stok_min || '';
+
+        // Set custom dropdown kategori
+        const idKat = d.id_kategori || '';
+        document.getElementById('edit_id_kategori').value = idKat;
+        if (idKat) {
+            const item = document.querySelector('#kategoriDropdown [data-value="' + idKat + '"]');
+            document.getElementById('kategoriLabel').textContent = item ? item.textContent.trim() : '-- Pilih Kategori --';
+            document.getElementById('kategoriLabel').classList.remove('text-slate-400');
+            document.getElementById('kategoriLabel').classList.add('text-slate-700');
+        } else {
+            document.getElementById('kategoriLabel').textContent = '-- Pilih Kategori --';
+            document.getElementById('kategoriLabel').classList.add('text-slate-400');
+            document.getElementById('kategoriLabel').classList.remove('text-slate-700');
+        }
+
         const m = document.getElementById('modalEdit');
         m.classList.remove('hidden'); m.classList.add('flex');
     }
-    function closeEditModal() { const m = document.getElementById('modalEdit'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    function closeEditModal() {
+        const m = document.getElementById('modalEdit');
+        m.classList.add('hidden'); m.classList.remove('flex');
+        // tutup dropdown juga
+        document.getElementById('kategoriDropdown').classList.add('hidden');
+        document.getElementById('kategoriChevron').style.transform = '';
+    }
+
+    function toggleKategoriDropdown(e) {
+        e.stopPropagation();
+        const dd = document.getElementById('kategoriDropdown');
+        const chevron = document.getElementById('kategoriChevron');
+        const trigger = document.getElementById('kategoriTrigger');
+        const isHidden = dd.classList.contains('hidden');
+        dd.classList.toggle('hidden');
+        chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+        trigger.style.borderColor = isHidden ? '#60a5fa' : '';
+        trigger.style.background = isHidden ? '#fff' : '';
+        trigger.style.boxShadow = isHidden ? '0 0 0 3px rgba(147,197,253,0.4)' : '';
+    }
+
+    function pilihKategori(value, label) {
+        document.getElementById('edit_id_kategori').value = value;
+        const lbl = document.getElementById('kategoriLabel');
+        lbl.textContent = label;
+        lbl.className = value ? 'text-slate-700' : 'text-slate-400';
+        document.getElementById('kategoriDropdown').classList.add('hidden');
+        document.getElementById('kategoriChevron').style.transform = '';
+        const trigger = document.getElementById('kategoriTrigger');
+        trigger.style.borderColor = '';
+        trigger.style.background = '';
+        trigger.style.boxShadow = '';
+    }
+
+    // Tutup dropdown kalau klik di luar
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('customKategoriWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            document.getElementById('kategoriDropdown').classList.add('hidden');
+            document.getElementById('kategoriChevron').style.transform = '';
+            const trigger = document.getElementById('kategoriTrigger');
+            if (trigger) { trigger.style.borderColor = ''; trigger.style.background = ''; trigger.style.boxShadow = ''; }
+        }
+    });
     document.addEventListener('DOMContentLoaded', function() {
         const me = document.getElementById('modalEdit'); if (me) me.addEventListener('click', function(e){ if (e.target === this) closeEditModal(); });
     });
