@@ -1,5 +1,4 @@
 <?php
-// Pastikan session_start hanya dipanggil SEKALI
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -17,12 +16,10 @@ $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-// ── Fetch kategori (untuk form tambah barang baru) ───────────
 $kategori_list = [];
 $res_kat = $conn->query("SELECT id_kategori, nama_kategori FROM kategori ORDER BY nama_kategori ASC");
 if ($res_kat) while ($row = $res_kat->fetch_assoc()) $kategori_list[] = $row;
 
-// ── Fetch barang (join kategori) ──────────────────────────────
 $barang_list = [];
 $res = $conn->query("
     SELECT b.id_barang, b.nama_barang, b.merek, b.satuan,
@@ -34,12 +31,10 @@ $res = $conn->query("
 ");
 while ($row = $res->fetch_assoc()) $barang_list[] = $row;
 
-// ── Stat cards ────────────────────────────────────────────────
 $stat_masuk  = $conn->query("SELECT COALESCE(SUM(jumlah),0) as total, COUNT(*) as count FROM transaksi_stok WHERE jenis='masuk'  AND DATE(created_at)=CURDATE()")->fetch_assoc();
 $stat_keluar = $conn->query("SELECT COALESCE(SUM(jumlah),0) as total, COUNT(*) as count FROM transaksi_stok WHERE jenis='keluar' AND DATE(created_at)=CURDATE()")->fetch_assoc();
 $stat_total  = $conn->query("SELECT COUNT(*) as count FROM transaksi_stok WHERE DATE(created_at)=CURDATE()")->fetch_assoc();
 
-// ── Filter Periode & Jenis ────────────────────────────────────
 $filter_periode = in_array($_GET['periode'] ?? '', ['1', '7', '30']) ? $_GET['periode'] : '7';
 $filter_jenis   = in_array($_GET['jenis']   ?? '', ['masuk', 'keluar']) ? $_GET['jenis'] : 'all';
 
@@ -49,10 +44,8 @@ if ($filter_jenis !== 'all') {
 }
 $where = 'WHERE ' . implode(' AND ', $where_parts);
 
-// Label periode untuk tampilan
 $periode_label = ['1' => 'Hari Ini', '7' => '7 Hari Terakhir', '30' => '1 Bulan Terakhir'];
 
-// ── Riwayat ───────────────────────────────────────────────────
 $riwayat = $conn->query("
     SELECT ts.id_transaksi, ts.created_at, ts.jenis, ts.jumlah,
            ts.supplier, ts.no_struk, ts.keterangan,
@@ -109,14 +102,12 @@ tbody tr{border-bottom:1px solid #f8fafc;transition:background 0.15s}
 tbody tr:hover{background:#f8fafc}
 tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:middle}
 
-/* ── Filter Tabs ── */
 .filter-tab{padding:6px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid transparent;cursor:pointer;transition:all 0.2s;background:#f8fafc;color:#94a3b8;text-decoration:none;white-space:nowrap}
 .filter-tab:hover{color:#475569;background:#f1f5f9}
 .filter-tab.f-all   {background:#1e293b;color:white}
 .filter-tab.f-masuk {background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
 .filter-tab.f-keluar{background:#ffe4e6;color:#be123c;border-color:#fecdd3}
 
-/* ── Periode Dropdown ── */
 .periode-select{padding:6px 28px 6px 12px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid #e2e8f0;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;-webkit-appearance:none;appearance:none;color:#334155;cursor:pointer;outline:none;transition:all 0.2s}
 .periode-select:focus{border-color:#2563eb;background-color:white;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
 
@@ -127,11 +118,9 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 .stok-low {color:#f59e0b;font-weight:700}
 .stok-danger{color:#e11d48;font-weight:700}
 
-/* ── Empty State ── */
 .empty-state{padding:56px 0;display:flex;flex-direction:column;align-items:center;gap:12px}
 .empty-icon{width:56px;height:56px;border-radius:16px;background:#f1f5f9;display:flex;align-items:center;justify-content:center}
 
-/* ── Toast Notification ── */
 #toast-container{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
 .toast{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:16px;font-size:12.5px;font-weight:600;min-width:320px;max-width:520px;box-shadow:0 12px 40px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);pointer-events:all;opacity:0;transform:translateY(-20px) scale(0.96);transition:opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),transform 0.35s cubic-bezier(0.34,1.56,0.64,1)}
 .toast.show{opacity:1;transform:translateY(0) scale(1)}
@@ -161,7 +150,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <div class="p-4 md:p-8 md:pt-20 pt-4">
 
-    <!-- Page Header -->
     <div class="mb-5 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
             <h1 class="text-[18px] md:text-[20px] font-bold text-slate-800 tracking-tight">Transaksi Barang</h1>
@@ -181,24 +169,22 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
         </div>
     </div>
 
-    <!-- Riwayat -->
     <div class="content-card">
 
-        <!-- Header + Filter -->
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4 md:mb-5">
             <h2 class="text-[14px] font-bold text-slate-800 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-blue-600 rounded-full"></span>
                 Riwayat Transaksi
             </h2>
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- Dropdown Periode -->
+                
                 <select class="periode-select"
                         onchange="window.location.href='?periode='+this.value+'&jenis=<?= $filter_jenis ?>'">
                     <option value="1"  <?= $filter_periode==='1'  ? 'selected' : '' ?>>Hari Ini</option>
                     <option value="7"  <?= $filter_periode==='7'  ? 'selected' : '' ?>>7 Hari Terakhir</option>
                     <option value="30" <?= $filter_periode==='30' ? 'selected' : '' ?>>1 Bulan Terakhir</option>
                 </select>
-                <!-- Filter Jenis -->
+                
                 <a href="?periode=<?= $filter_periode ?>&jenis=all"    class="filter-tab <?= $filter_jenis==='all'    ? 'f-all'    : '' ?>">Semua</a>
                 <a href="?periode=<?= $filter_periode ?>&jenis=masuk"  class="filter-tab <?= $filter_jenis==='masuk'  ? 'f-masuk'  : '' ?>">Masuk</a>
                 <a href="?periode=<?= $filter_periode ?>&jenis=keluar" class="filter-tab <?= $filter_jenis==='keluar' ? 'f-keluar' : '' ?>">Keluar</a>
@@ -288,11 +274,11 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 </main>
 
 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
-<!-- ===== MODAL ===== -->
+
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
 <div class="modal-box" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
 
-    <!-- Header Modal -->
+  
     <div class="modal-header-masuk p-6 pb-4 flex-shrink-0" id="modal-header">
         <div class="flex items-center justify-between mb-4">
             <div>
@@ -306,7 +292,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 </svg>
             </button>
         </div>
-        <!-- Tab Masuk / Keluar -->
+        
         <div class="flex gap-2 p-1 bg-white/15 rounded-xl">
             <button class="tab-btn tab-masuk active"  id="tab-masuk"  onclick="switchTab('masuk')">↑ Barang Masuk</button>
             <button class="tab-btn tab-keluar"        id="tab-keluar" onclick="switchTab('keluar')">↓ Barang Keluar</button>
@@ -316,9 +302,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
     <!-- Scrollable body -->
     <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling:touch;">
 
-        <!-- ══════════════════════════════════════════
-             PANEL MASUK
-        ═══════════════════════════════════════════ -->
         <div id="panel-masuk">
 
             <!-- Toggle: Barang Lama / Barang Baru -->
@@ -492,9 +475,6 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
         </div><!-- /panel-masuk -->
 
-        <!-- ══════════════════════════════════════════
-             PANEL KELUAR
-        ═══════════════════════════════════════════ -->
         <div id="panel-keluar" class="hidden">
             <form method="POST" action="proses_transaksi.php" class="p-6 space-y-4">
                 <input type="hidden" name="aksi" value="transaksi">
@@ -597,7 +577,6 @@ function dismissToast(toast) {
     setTimeout(() => toast.remove(), 300);
 }
 
-// ── Trigger dari PHP flash session ──────────────────────────────
 <?php if ($flash_success): ?>
 window.addEventListener('DOMContentLoaded', function() {
     showToast('ok', 'Berhasil! 🎉', <?= json_encode(htmlspecialchars($flash_success)) ?>);
@@ -644,7 +623,6 @@ function handleBarangInput(input, mode) {
     }
 }
 
-// ── Modal open/close ──────────────────────────────────────────────
 function openModal(jenis = 'masuk') {
     document.getElementById('modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -663,7 +641,6 @@ function closeModalOnBg(e) {
     if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
-// ── Switch tab Masuk / Keluar ────────────────────────────────────
 function switchTab(jenis) {
     const isMasuk = jenis === 'masuk';
     const hdr = document.getElementById('modal-header');
@@ -675,7 +652,6 @@ function switchTab(jenis) {
     document.getElementById('panel-keluar').classList.toggle('hidden', isMasuk);
 }
 
-// ── Toggle Barang Lama / Barang Baru ─────────────────────────────
 function switchMasukMode(mode) {
     const isLama = mode === 'lama';
     document.getElementById('form-lama').classList.toggle('hidden', !isLama);
@@ -691,7 +667,6 @@ function switchMasukMode(mode) {
     }
 }
 
-// ── Info barang panel Masuk ──────────────────────────────────────
 function updateBarangInfoById(id) {
     const info = document.getElementById('barang-info');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
@@ -710,7 +685,6 @@ function updateBarangInfoById(id) {
     info.classList.remove('hidden');
 }
 
-// ── Info barang panel Keluar ─────────────────────────────────────
 function updateBarangInfoKeluarById(id) {
     const info = document.getElementById('barang-info-keluar');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
