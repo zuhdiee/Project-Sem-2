@@ -1,8 +1,9 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-// if (!isset($_SESSION['id'])) {
-//     header("Location: login.php");
-//     exit;
+if (!isset($_SESSION['id'])) {
+    header("Location: index.php");
+    exit;
+}
 // }
 
 $flash_success = $_SESSION['flash_success'] ?? '';
@@ -510,13 +511,27 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Harga Beli</label>
-                        <input name="harga_beli" type="number" step="0.01" placeholder="0"
+                        <input name="harga_beli" id="edit_harga_beli" type="number" step="0.01" placeholder="0"
+                            oninput="validasiHarga()"
                             class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
                     </div>
                     <div>
                         <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">Harga Jual</label>
-                        <input name="harga_jual" type="number" step="0.01" placeholder="0"
+                        <input name="harga_jual" id="edit_harga_jual" type="number" step="0.01" placeholder="0"
+                            oninput="validasiHarga()"
                             class="w-full px-3.5 py-2.5 text-[13px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300">
+                    </div>
+                </div>
+                <!-- Warning harga jual < harga beli -->
+                <div id="warnHarga" class="hidden items-center gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+                    <div class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-amber-800 text-[12px] font-bold leading-none mb-0.5">Harga tidak valid!</p>
+                        <p class="text-amber-700 text-[11px]">Harga jual tidak boleh lebih rendah dari harga beli.</p>
                     </div>
                 </div>
 
@@ -532,10 +547,10 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
                         class="flex-1 py-2.5 text-[13px] font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
                         Batal
                     </button>
-                    <button type="submit"
+                    <button type="submit" id="btnSimpanEdit"
                         class="flex-1 py-2.5 text-[13px] font-bold text-white rounded-xl transition"
                         style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); box-shadow: 0 4px 14px rgba(37,99,235,0.35);"
-                        onmouseover="this.style.background='linear-gradient(135deg,#1d4ed8 0%,#1e40af 100%)'" onmouseout="this.style.background='linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)'">
+                        onmouseover="if(!this.disabled)this.style.background='linear-gradient(135deg,#1d4ed8 0%,#1e40af 100%)'" onmouseout="if(!this.disabled)this.style.background='linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)'">
                         Simpan Perubahan
                     </button>
                 </div>
@@ -553,6 +568,8 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
         f.satuan.value = d.satuan || '';
         f.harga_beli.value = d.harga_beli || '';
         f.harga_jual.value = d.harga_jual || '';
+        // Reset validasi harga saat modal dibuka
+        validasiHarga();
         f.stok.value = d.stok || '';
         f.stok_min.value = d.stok_min || '';
 
@@ -573,6 +590,35 @@ function rupiah($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
         const m = document.getElementById('modalEdit');
         m.classList.remove('hidden'); m.classList.add('flex');
     }
+    function validasiHarga() {
+        const beli  = parseFloat(document.getElementById('edit_harga_beli').value) || 0;
+        const jual  = parseFloat(document.getElementById('edit_harga_jual').value) || 0;
+        const warn  = document.getElementById('warnHarga');
+        const btn   = document.getElementById('btnSimpanEdit');
+        const inputJual = document.getElementById('edit_harga_jual');
+        const invalid = beli > 0 && jual > 0 && jual < beli;
+
+        if (invalid) {
+            warn.classList.remove('hidden');
+            warn.classList.add('flex');
+            inputJual.classList.add('border-amber-400', 'bg-amber-50', 'ring-2', 'ring-amber-100');
+            inputJual.classList.remove('border-slate-200', 'bg-slate-50');
+            btn.disabled = true;
+            btn.style.background = 'linear-gradient(135deg,#94a3b8 0%,#64748b 100%)';
+            btn.style.boxShadow = 'none';
+            btn.style.cursor = 'not-allowed';
+        } else {
+            warn.classList.add('hidden');
+            warn.classList.remove('flex');
+            inputJual.classList.remove('border-amber-400', 'bg-amber-50', 'ring-2', 'ring-amber-100');
+            inputJual.classList.add('border-slate-200', 'bg-slate-50');
+            btn.disabled = false;
+            btn.style.background = 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)';
+            btn.style.boxShadow = '0 4px 14px rgba(37,99,235,0.35)';
+            btn.style.cursor = '';
+        }
+    }
+
     function closeEditModal() {
         const m = document.getElementById('modalEdit');
         m.classList.add('hidden'); m.classList.remove('flex');

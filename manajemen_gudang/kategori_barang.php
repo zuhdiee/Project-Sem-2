@@ -1,20 +1,27 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-// if (!isset($_SESSION['id'])) {
-//     header("Location: login.php");
-//     exit;
+if (!isset($_SESSION['id'])) {
+    header("Location: index.php");
+    exit;
+}
 // }
 
 $is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'Admin';
 
 include 'koneksi.php';
 
+// ======================================
+// PASTIKAN KOLOM IKON & WARNA ADA
+// ======================================
 $cek_ikon = mysqli_query($conn, "SHOW COLUMNS FROM kategori LIKE 'ikon'");
 if (mysqli_num_rows($cek_ikon) === 0) {
     mysqli_query($conn, "ALTER TABLE kategori ADD COLUMN ikon VARCHAR(20) DEFAULT '📦' AFTER deskripsi");
     mysqli_query($conn, "ALTER TABLE kategori ADD COLUMN warna VARCHAR(20) DEFAULT '#dbeafe' AFTER ikon");
 }
 
+// ======================================
+// TAMBAH KATEGORI
+// ======================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'tambah_kategori') {
     if (!$is_admin) {
         header('Location: kategori_barang.php?status=gagal&msg=' . urlencode('Akses ditolak. Hanya admin yang dapat menambahkan kategori.'));
@@ -38,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $warna_esc = mysqli_real_escape_string($conn, $warna_kategori);
 
         $result = mysqli_query($conn,
-            "INSERT INTO kategori (id_kategori, nama_kategori, deskripsi, ikon, warna, created_at, updated_at)
+            "INSERT INTO kategori (id_kategori, nama_kategori, deskripsi, ikon, warna_ikon, created_at, updated_at)
              VALUES ('$newID', '$nama_esc', '$desk_esc', '$ikon_esc', '$warna_esc', NOW(), NOW())"
         );
 
@@ -51,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// ======================================
+// FUNGSI MAPPING IKON & WARNA OTOMATIS
+// ======================================
 function getIkonDanWarna($nama_kategori, $ikon_db, $warna_db) {
     $accent_map = [
         '#dbeafe'=>'#2563eb','#fce7f3'=>'#db2777','#fef3c7'=>'#d97706',
@@ -162,6 +172,9 @@ function getIkonDanWarna($nama_kategori, $ikon_db, $warna_db) {
     return [$ikon, $warna, $accent];
 }
 
+// ======================================
+// AMBIL DATA KATEGORI + BARANG
+// ======================================
 $kategori_list = [];
 $query = mysqli_query($conn, "SELECT * FROM kategori ORDER BY id_kategori ASC");
 
@@ -456,6 +469,9 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
 <?php include 'include/footer.php'; ?>
 </main>
 
+<!-- ══════════════════════════════
+     DETAIL MODAL
+══════════════════════════════ -->
 <div class="modal-bg" id="detailModal" onclick="closeDetailOutside(event)">
     <div class="detail-modal">
         <div class="modal-header">
@@ -496,6 +512,9 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
     </div>
 </div>
 
+<!-- ══════════════════════════════
+     TAMBAH KATEGORI MODAL
+══════════════════════════════ -->
 <div class="modal-bg" id="tambahModal" onclick="closeTambahOutside(event)">
     <div class="tambah-modal">
         <div class="modal-close" onclick="closeTambah()">✕</div>
@@ -554,6 +573,9 @@ tbody td:first-child{padding-left:28px;}tbody td:last-child{padding-right:28px;}
     </div>
 </div>
 
+<!-- ══════════════════════════════
+     TOAST — tengah atas
+══════════════════════════════ -->
 <div id="toast-wrapper">
 
     <div class="toast toast-sukses" id="toastSukses">
@@ -762,4 +784,4 @@ function hideToast(id) {
 <?php endif; ?>
 </script>
 </body>
-</html>                               
+</html>

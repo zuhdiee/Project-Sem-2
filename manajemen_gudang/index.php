@@ -31,49 +31,27 @@
             }
         }
 
-        @keyframes pulse-scale {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.15);
-            }
-        }
-
-        .logout-notification {
-            animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.3);
-        }
-
-        .logout-icon {
-            animation: pulse-scale 2s ease-in-out infinite;
-        }
+        #toast-container{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
+        .toast{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:16px;font-size:12.5px;font-weight:600;min-width:320px;max-width:520px;box-shadow:0 12px 40px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);pointer-events:all;opacity:0;transform:translateY(-20px) scale(0.96);transition:opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),transform 0.35s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden}
+        .toast.show{opacity:1;transform:translateY(0) scale(1)}
+        .toast.hide{opacity:0;transform:translateY(-16px) scale(0.96);transition:opacity 0.25s ease,transform 0.25s ease}
+        .toast-ok{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1.5px solid #6ee7b7;color:#065f46}
+        .toast-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .toast-icon-ok{background:#bbf7d0}
+        .toast-body{flex:1}
+        .toast-title{font-size:12px;font-weight:700;margin-bottom:2px}
+        .toast-msg{font-size:11px;font-weight:500;opacity:0.85;line-height:1.4}
+        .toast-close{width:22px;height:22px;border-radius:6px;border:none;cursor:pointer;background:rgba(0,0,0,0.07);color:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;transition:background 0.15s}
+        .toast-close:hover{background:rgba(0,0,0,0.14)}
+        .toast-progress{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 16px 16px;animation:toast-bar 4.5s linear forwards}
+        .toast-progress-ok{background:linear-gradient(90deg,#34d399,#059669)}
+        @keyframes toast-bar{from{width:100%}to{width:0%}}
     </style>
 </head>
 
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <?php if(isset($_GET['logout']) && $_GET['logout'] == 'success'): ?>
-        <div class="mb-6 logout-notification p-5 rounded-2xl flex items-start gap-4 border border-blue-200/50 w-full max-w-2xl mx-auto">
-
-            <div class="logout-icon w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-            </div>
-
-            <div class="flex-1">
-                <p class="text-white text-[13px] font-bold tracking-tight">
-                    ✨ Logout Berhasil!
-                </p>
-
-                <p class="text-blue-50 text-[11px] mt-1.5 leading-relaxed">
-                    Anda telah berhasil keluar dari sistem. Terima kasih telah menggunakan <span class="font-semibold">Putra Surya Agung</span>.
-                </p>
-            </div>
-        </div>
-    <?php endif; ?>
+    <div id="toast-container"></div>
 
     <div class="max-w-2xl w-full flex bg-white rounded-[2rem] overflow-hidden login-container min-h-[380px]">
 
@@ -218,7 +196,16 @@
 
             </form>
 
-            <div class="mt-8 text-center">
+            <div class="mt-5 text-center">
+                <p class="text-slate-500 text-[11px]">
+                    Belum punya akun?
+                    <a href="register.php" class="text-blue-700 hover:text-blue-900 font-semibold transition">
+                        Daftar di sini
+                    </a>
+                </p>
+            </div>
+
+            <div class="mt-4 text-center">
                 <p class="text-slate-300 text-[8px] uppercase tracking-widest font-medium">
                     &copy; 2026 PSA Logistic
                 </p>
@@ -230,21 +217,42 @@
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');
+            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+        }
 
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-            } else {
-                passwordInput.type = 'password';
-            }
+        function showToast(type, title, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-ok';
+            toast.innerHTML = `
+                <div class="toast-icon toast-icon-ok">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#059669"><path d="M5 13l4 4L19 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="toast-body">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-msg">${message}</div>
+                </div>
+                <button class="toast-close" onclick="dismissToast(this.closest('.toast'))">✕</button>
+                <div class="toast-progress toast-progress-ok"></div>
+            `;
+            container.appendChild(toast);
+            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+            const timer = setTimeout(() => dismissToast(toast), 4500);
+            toast._timer = timer;
+        }
+
+        function dismissToast(toast) {
+            if (!toast) return;
+            clearTimeout(toast._timer);
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const logoutNotification = document.querySelector('.logout-notification');
-            if (logoutNotification) {
-                setTimeout(function() {
-                    logoutNotification.remove();
-                }, 5000);
-            }
+            <?php if(isset($_GET['logout']) && $_GET['logout'] == 'success'): ?>
+            showToast('ok', 'Logout Berhasil!', 'Anda telah keluar dari sistem. Sampai jumpa!');
+            <?php endif; ?>
         });
     </script>
 

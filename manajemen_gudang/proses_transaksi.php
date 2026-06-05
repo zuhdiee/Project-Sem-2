@@ -103,6 +103,8 @@ if ($aksi === 'transaksi') {
         $stmt->execute();
         $stmt->close();
 
+        // Catatan: UPDATE stok barang ditangani otomatis oleh trigger `after_transaksi_insert` di DB.
+        // Tidak perlu query UPDATE manual di sini.
 
         $conn->commit();
         $label = $jenis === 'masuk' ? 'masuk' : 'keluar';

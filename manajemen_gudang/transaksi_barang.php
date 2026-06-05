@@ -1,4 +1,5 @@
 <?php
+// Pastikan session_start hanya dipanggil SEKALI
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,19 +8,21 @@ date_default_timezone_set('Asia/Jakarta');
 
 include 'koneksi.php';
 
-// if (!isset($_SESSION['id'])) {
-//     header("Location: login.php");
-//     exit;
-// }
+if (!isset($_SESSION['id'])) {
+    header("Location: index.php");
+    exit;
+}
 
 $flash_success = $_SESSION['flash_success'] ?? '';
 $flash_error   = $_SESSION['flash_error']   ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
+// ── Fetch kategori (untuk form tambah barang baru) ───────────
 $kategori_list = [];
 $res_kat = $conn->query("SELECT id_kategori, nama_kategori FROM kategori ORDER BY nama_kategori ASC");
 if ($res_kat) while ($row = $res_kat->fetch_assoc()) $kategori_list[] = $row;
 
+// ── Fetch barang (join kategori) ──────────────────────────────
 $barang_list = [];
 $res = $conn->query("
     SELECT b.id_barang, b.nama_barang, b.merek, b.satuan,
@@ -31,10 +34,12 @@ $res = $conn->query("
 ");
 while ($row = $res->fetch_assoc()) $barang_list[] = $row;
 
+// ── Stat cards ────────────────────────────────────────────────
 $stat_masuk  = $conn->query("SELECT COALESCE(SUM(jumlah),0) as total, COUNT(*) as count FROM transaksi_stok WHERE jenis='masuk'  AND DATE(created_at)=CURDATE()")->fetch_assoc();
 $stat_keluar = $conn->query("SELECT COALESCE(SUM(jumlah),0) as total, COUNT(*) as count FROM transaksi_stok WHERE jenis='keluar' AND DATE(created_at)=CURDATE()")->fetch_assoc();
 $stat_total  = $conn->query("SELECT COUNT(*) as count FROM transaksi_stok WHERE DATE(created_at)=CURDATE()")->fetch_assoc();
 
+// ── Filter Periode & Jenis ────────────────────────────────────
 $filter_periode = in_array($_GET['periode'] ?? '', ['1', '7', '30']) ? $_GET['periode'] : '7';
 $filter_jenis   = in_array($_GET['jenis']   ?? '', ['masuk', 'keluar']) ? $_GET['jenis'] : 'all';
 
@@ -44,8 +49,10 @@ if ($filter_jenis !== 'all') {
 }
 $where = 'WHERE ' . implode(' AND ', $where_parts);
 
+// Label periode untuk tampilan
 $periode_label = ['1' => 'Hari Ini', '7' => '7 Hari Terakhir', '30' => '1 Bulan Terakhir'];
 
+// ── Riwayat ───────────────────────────────────────────────────
 $riwayat = $conn->query("
     SELECT ts.id_transaksi, ts.created_at, ts.jenis, ts.jumlah,
            ts.supplier, ts.no_struk, ts.keterangan,
@@ -102,12 +109,14 @@ tbody tr{border-bottom:1px solid #f8fafc;transition:background 0.15s}
 tbody tr:hover{background:#f8fafc}
 tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:middle}
 
+/* ── Filter Tabs ── */
 .filter-tab{padding:6px 14px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid transparent;cursor:pointer;transition:all 0.2s;background:#f8fafc;color:#94a3b8;text-decoration:none;white-space:nowrap}
 .filter-tab:hover{color:#475569;background:#f1f5f9}
 .filter-tab.f-all   {background:#1e293b;color:white}
 .filter-tab.f-masuk {background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
 .filter-tab.f-keluar{background:#ffe4e6;color:#be123c;border-color:#fecdd3}
 
+/* ── Periode Dropdown ── */
 .periode-select{padding:6px 28px 6px 12px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid #e2e8f0;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;-webkit-appearance:none;appearance:none;color:#334155;cursor:pointer;outline:none;transition:all 0.2s}
 .periode-select:focus{border-color:#2563eb;background-color:white;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
 
@@ -118,9 +127,11 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 .stok-low {color:#f59e0b;font-weight:700}
 .stok-danger{color:#e11d48;font-weight:700}
 
+/* ── Empty State ── */
 .empty-state{padding:56px 0;display:flex;flex-direction:column;align-items:center;gap:12px}
 .empty-icon{width:56px;height:56px;border-radius:16px;background:#f1f5f9;display:flex;align-items:center;justify-content:center}
 
+/* ── Toast Notification ── */
 #toast-container{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
 .toast{display:flex;align-items:center;gap:12px;padding:14px 20px;border-radius:16px;font-size:12.5px;font-weight:600;min-width:320px;max-width:520px;box-shadow:0 12px 40px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);pointer-events:all;opacity:0;transform:translateY(-20px) scale(0.96);transition:opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),transform 0.35s cubic-bezier(0.34,1.56,0.64,1)}
 .toast.show{opacity:1;transform:translateY(0) scale(1)}
@@ -150,6 +161,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 
 <div class="p-4 md:p-8 md:pt-20 pt-4">
 
+    <!-- Page Header -->
     <div class="mb-5 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
             <h1 class="text-[18px] md:text-[20px] font-bold text-slate-800 tracking-tight">Transaksi Barang</h1>
@@ -169,22 +181,24 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
         </div>
     </div>
 
+    <!-- Riwayat -->
     <div class="content-card">
 
+        <!-- Header + Filter -->
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4 md:mb-5">
             <h2 class="text-[14px] font-bold text-slate-800 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-blue-600 rounded-full"></span>
                 Riwayat Transaksi
             </h2>
             <div class="flex items-center gap-2 flex-wrap">
-                
+                <!-- Dropdown Periode -->
                 <select class="periode-select"
                         onchange="window.location.href='?periode='+this.value+'&jenis=<?= $filter_jenis ?>'">
                     <option value="1"  <?= $filter_periode==='1'  ? 'selected' : '' ?>>Hari Ini</option>
                     <option value="7"  <?= $filter_periode==='7'  ? 'selected' : '' ?>>7 Hari Terakhir</option>
                     <option value="30" <?= $filter_periode==='30' ? 'selected' : '' ?>>1 Bulan Terakhir</option>
                 </select>
-                
+                <!-- Filter Jenis -->
                 <a href="?periode=<?= $filter_periode ?>&jenis=all"    class="filter-tab <?= $filter_jenis==='all'    ? 'f-all'    : '' ?>">Semua</a>
                 <a href="?periode=<?= $filter_periode ?>&jenis=masuk"  class="filter-tab <?= $filter_jenis==='masuk'  ? 'f-masuk'  : '' ?>">Masuk</a>
                 <a href="?periode=<?= $filter_periode ?>&jenis=keluar" class="filter-tab <?= $filter_jenis==='keluar' ? 'f-keluar' : '' ?>">Keluar</a>
@@ -274,11 +288,11 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
 </main>
 
 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
-
+<!-- ===== MODAL ===== -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
 <div class="modal-box" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
 
-  
+    <!-- Header Modal -->
     <div class="modal-header-masuk p-6 pb-4 flex-shrink-0" id="modal-header">
         <div class="flex items-center justify-between mb-4">
             <div>
@@ -292,7 +306,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 </svg>
             </button>
         </div>
-        
+        <!-- Tab Masuk / Keluar -->
         <div class="flex gap-2 p-1 bg-white/15 rounded-xl">
             <button class="tab-btn tab-masuk active"  id="tab-masuk"  onclick="switchTab('masuk')">↑ Barang Masuk</button>
             <button class="tab-btn tab-keluar"        id="tab-keluar" onclick="switchTab('keluar')">↓ Barang Keluar</button>
@@ -302,6 +316,9 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
     <!-- Scrollable body -->
     <div class="flex-1 overflow-y-auto" style="-webkit-overflow-scrolling:touch;">
 
+        <!-- ══════════════════════════════════════════
+             PANEL MASUK
+        ═══════════════════════════════════════════ -->
         <div id="panel-masuk">
 
             <!-- Toggle: Barang Lama / Barang Baru -->
@@ -310,12 +327,12 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     <button id="toggle-lama"
                         onclick="switchMasukMode('lama')"
                         class="flex-1 py-2 text-[11px] font-bold rounded-lg transition-all bg-white text-blue-700 shadow-sm">
-                        📦 Stok Barang Ada
+                        Stok Barang Ada
                     </button>
                     <button id="toggle-baru"
                         onclick="switchMasukMode('baru')"
                         class="flex-1 py-2 text-[11px] font-bold rounded-lg transition-all text-slate-500">
-                        ✨ Tambah Barang Baru
+                        Tambah Barang Baru
                     </button>
                 </div>
             </div>
@@ -328,7 +345,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Tanggal Transaksi</label>
-                        <input type="date" name="tanggal" id="input-date-lama" class="input-field input-field-masuk" required>
+                        <input type="date" name="tanggal" id="input-date-lama" class="input-field input-field-masuk" required readonly style="pointer-events:none;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;">
                     </div>
                     <div>
                         <label>Nama Supplier</label>
@@ -367,8 +384,13 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Jumlah <span id="satuan-hint" class="text-slate-400 font-normal text-[10px]"></span></label>
-                        <input type="number" name="jumlah" step="0.01" min="0.01"
+                        <input type="number" name="jumlah" id="masuk-jumlah" step="1" min="1"
+                               oninput="validasiJumlahMasuk()"
                                class="input-field input-field-masuk" placeholder="0" required>
+                        <!-- Warning jumlah tidak bulat -->
+                        <p id="warnJumlahMasuk" class="hidden items-center gap-1 mt-1 whitespace-nowrap" style="color:#ea580c;font-size:11px;font-weight:600;">
+                            ⚠ Jumlah tidak boleh mengandung koma
+                        </p>
                     </div>
                     <div>
                         <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
@@ -376,7 +398,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     </div>
                 </div>
 
-                <button type="submit"
+                <button type="submit" id="btnSimpanMasuk"
                         class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
                         style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
                     Simpan Transaksi Masuk
@@ -419,12 +441,12 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label>Stok Awal</label>
-                        <input type="number" name="stok_awal" value="0" min="0"
+                        <input type="number" name="stok_awal" value="0" min="0" step="1"
                                class="input-field input-field-masuk" placeholder="0">
                     </div>
                     <div>
                         <label>Stok Min</label>
-                        <input type="number" name="stok_min" value="10" min="0"
+                        <input type="number" name="stok_min" value="10" min="0" step="1"
                                class="input-field input-field-masuk" placeholder="10">
                     </div>
                     <div>
@@ -443,13 +465,28 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Harga Beli</label>
-                        <input type="number" name="harga_beli" min="0"
+                        <input type="number" name="harga_beli" id="nb_harga_beli" min="0"
+                               oninput="validasiHargaBaru()"
                                class="input-field input-field-masuk" placeholder="0">
                     </div>
                     <div>
                         <label>Harga Jual</label>
-                        <input type="number" name="harga_jual" min="0"
+                        <input type="number" name="harga_jual" id="nb_harga_jual" min="0"
+                               oninput="validasiHargaBaru()"
                                class="input-field input-field-masuk" placeholder="0">
+                    </div>
+                </div>
+                <!-- Warning harga jual < harga beli -->
+                <div id="warnHargaBaru" class="hidden items-center gap-2.5 rounded-xl px-4 py-3"
+                     style="background:#fffbeb;border:1.5px solid #fcd34d;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg width="15" height="15" fill="none" stroke="#d97706" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="color:#92400e;font-size:12px;font-weight:700;line-height:1;margin-bottom:2px;">Harga tidak valid!</p>
+                        <p style="color:#b45309;font-size:11px;">Harga jual tidak boleh lebih rendah dari harga beli.</p>
                     </div>
                 </div>
 
@@ -466,15 +503,18 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     </div>
                 </div>
 
-                <button type="submit"
+                <button type="submit" id="btnSimpanBaruBaru"
                         class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
                         style="background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.3)">
-                    ✨ Simpan Barang Baru
+                    Simpan Barang Baru
                 </button>
             </form>
 
         </div><!-- /panel-masuk -->
 
+        <!-- ══════════════════════════════════════════
+             PANEL KELUAR
+        ═══════════════════════════════════════════ -->
         <div id="panel-keluar" class="hidden">
             <form method="POST" action="proses_transaksi.php" class="p-6 space-y-4">
                 <input type="hidden" name="aksi" value="transaksi">
@@ -483,7 +523,7 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Tanggal Transaksi</label>
-                        <input type="date" name="tanggal" id="input-date-keluar" class="input-field input-field-keluar" required>
+                        <input type="date" name="tanggal" id="input-date-keluar" class="input-field input-field-keluar" required readonly style="pointer-events:none;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;">
                     </div>
                     <div>
                         <label>Penerima / Customer</label>
@@ -512,8 +552,13 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>Jumlah <span id="satuan-hint-keluar" class="text-slate-400 font-normal text-[10px]"></span></label>
-                        <input type="number" name="jumlah" step="0.01" min="0.01"
+                        <input type="number" name="jumlah" id="keluar-jumlah" step="1" min="1"
+                               oninput="validasiStokKeluar()"
                                class="input-field input-field-keluar" placeholder="0" required>
+                        <!-- Warning jumlah tidak bulat -->
+                        <p id="warnJumlahKeluar" class="hidden items-center gap-1 mt-1 whitespace-nowrap" style="color:#ea580c;font-size:11px;font-weight:600;">
+                            ⚠ Jumlah tidak boleh mengandung koma
+                        </p>
                     </div>
                     <div>
                         <label>Keterangan <span class="text-slate-400 font-normal">(opsional)</span></label>
@@ -521,7 +566,26 @@ tbody tr td{padding:11px 8px 11px 0;font-size:11px;color:#475569;vertical-align:
                     </div>
                 </div>
 
-                <button type="submit"
+                <!-- Warning stok tidak cukup -->
+                <div id="warnStokKeluar" class="hidden items-center gap-3 rounded-xl px-4 py-3"
+                     style="background:#fff1f2;border:1.5px solid #fca5a5;">
+                    <div style="width:34px;height:34px;min-width:34px;border-radius:10px;background:#fecdd3;display:flex;align-items:center;justify-content:center;">
+                        <svg width="17" height="17" fill="none" stroke="#e11d48" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p style="color:#9f1239;font-size:12px;font-weight:700;line-height:1;margin-bottom:3px;">Stok tidak mencukupi!</p>
+                        <p id="warnStokKeluarMsg" style="color:#be123c;font-size:11px;line-height:1.4;">Jumlah keluar melebihi stok yang tersedia. Tambah stok terlebih dahulu.</p>
+                    </div>
+                    <button type="button" onclick="pindahKeTambahStok()"
+                       style="flex-shrink:0;padding:6px 12px;background:#e11d48;color:white;border-radius:8px;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;"
+                       onmouseover="this.style.background='#be123c'" onmouseout="this.style.background='#e11d48'">
+                        + Tambah Stok
+                    </button>
+                </div>
+
+                <button type="submit" id="btnSimpanKeluar"
                         class="w-full py-3 rounded-xl text-[12px] font-bold text-white transition-all"
                         style="background:#f43f5e;box-shadow:0 4px 14px rgba(244,63,94,0.3)">
                     Simpan Transaksi Keluar
@@ -577,6 +641,7 @@ function dismissToast(toast) {
     setTimeout(() => toast.remove(), 300);
 }
 
+// ── Trigger dari PHP flash session ──────────────────────────────
 <?php if ($flash_success): ?>
 window.addEventListener('DOMContentLoaded', function() {
     showToast('ok', 'Berhasil! 🎉', <?= json_encode(htmlspecialchars($flash_success)) ?>);
@@ -587,6 +652,161 @@ window.addEventListener('DOMContentLoaded', function() {
     showToast('err', 'Terjadi Kesalahan', <?= json_encode(htmlspecialchars($flash_error)) ?>);
 });
 <?php endif; ?>
+
+// ── Pindah ke form Tambah Stok (dari warning keluar) ─────────────
+function pindahKeTambahStok() {
+    // Ambil barang yang sedang dipilih di form keluar
+    const barangLabel = document.getElementById('input-barang-keluar').value;
+    const barangId    = document.getElementById('input-barang-id-keluar').value;
+
+    // Switch ke tab masuk
+    switchTab('masuk');
+    switchMasukMode('lama');
+
+    // Isi otomatis field barang di form masuk jika ada
+    if (barangLabel) {
+        const inputMasuk = document.getElementById('input-barang');
+        const hiddenMasuk = document.getElementById('input-barang-id-masuk');
+        if (inputMasuk)  inputMasuk.value  = barangLabel;
+        if (hiddenMasuk) hiddenMasuk.value = barangId;
+        if (barangId) updateBarangInfoById(barangId);
+    }
+
+    // Scroll ke atas modal body
+    const body = document.querySelector('.modal-box .flex-1.overflow-y-auto');
+    if (body) body.scrollTop = 0;
+}
+
+// ── Validasi: Harga Jual < Harga Beli (Form Barang Baru) ─────────
+function validasiHargaBaru() {
+    const beli  = parseFloat(document.getElementById('nb_harga_beli').value) || 0;
+    const jual  = parseFloat(document.getElementById('nb_harga_jual').value) || 0;
+    const warn  = document.getElementById('warnHargaBaru');
+    const btn   = document.getElementById('btnSimpanBaruBaru');
+    const inputJual = document.getElementById('nb_harga_jual');
+    const invalid = beli > 0 && jual > 0 && jual < beli;
+
+    if (invalid) {
+        warn.classList.remove('hidden'); warn.classList.add('flex');
+        inputJual.style.borderColor = '#fbbf24';
+        inputJual.style.background  = '#fffbeb';
+        inputJual.style.boxShadow   = '0 0 0 3px rgba(251,191,36,0.15)';
+        btn.disabled = true;
+        btn.style.background  = '#94a3b8';
+        btn.style.boxShadow   = 'none';
+        btn.style.cursor      = 'not-allowed';
+    } else {
+        warn.classList.add('hidden'); warn.classList.remove('flex');
+        inputJual.style.borderColor = '';
+        inputJual.style.background  = '';
+        inputJual.style.boxShadow   = '';
+        btn.disabled = false;
+        btn.style.background  = '#2563eb';
+        btn.style.boxShadow   = '0 4px 14px rgba(37,99,235,0.3)';
+        btn.style.cursor      = '';
+    }
+}
+
+// ── Validasi: Jumlah Masuk harus bilangan bulat ──────────────────
+function validasiJumlahMasuk() {
+    const input = document.getElementById('masuk-jumlah');
+    const warn  = document.getElementById('warnJumlahMasuk');
+    const btn   = document.getElementById('btnSimpanMasuk');
+    const val   = input.value;
+    const isDesimal = val !== '' && (val.includes('.') || val.includes(',') || !Number.isInteger(parseFloat(val)));
+
+    if (isDesimal) {
+        warn.classList.remove('hidden'); warn.style.display = 'block';
+        input.style.borderColor = '#fb923c';
+        input.style.background  = '#fff7ed';
+        input.style.boxShadow   = '0 0 0 3px rgba(251,146,60,0.15)';
+        btn.disabled = true;
+        btn.style.background = '#94a3b8';
+        btn.style.boxShadow  = 'none';
+        btn.style.cursor     = 'not-allowed';
+    } else {
+        warn.classList.add('hidden'); warn.style.display = '';
+        input.style.borderColor = '';
+        input.style.background  = '';
+        input.style.boxShadow   = '';
+        btn.disabled = false;
+        btn.style.background = '#2563eb';
+        btn.style.boxShadow  = '0 4px 14px rgba(37,99,235,0.3)';
+        btn.style.cursor     = '';
+    }
+}
+
+// ── Validasi: Stok Tidak Cukup (Form Barang Keluar) ──────────────
+// selectedStokKeluar diisi saat barang dipilih
+let selectedStokKeluar = null;
+let selectedSatuanKeluar = '';
+
+function validasiStokKeluar() {
+    const jumlahRaw   = document.getElementById('keluar-jumlah').value;
+    const jumlah      = parseFloat(jumlahRaw) || 0;
+    const warn        = document.getElementById('warnStokKeluar');
+    const warnDesimal = document.getElementById('warnJumlahKeluar');
+    const btn         = document.getElementById('btnSimpanKeluar');
+    const inputJumlah = document.getElementById('keluar-jumlah');
+
+    // Cek dulu apakah desimal
+    const isDesimal = jumlahRaw !== '' && (jumlahRaw.includes('.') || jumlahRaw.includes(',') || !Number.isInteger(parseFloat(jumlahRaw)));
+
+    if (isDesimal) {
+        warnDesimal.classList.remove('hidden'); warnDesimal.style.display = 'block';
+        warn.classList.add('hidden'); warn.classList.remove('flex');
+        inputJumlah.style.borderColor = '#fb923c';
+        inputJumlah.style.background  = '#fff7ed';
+        inputJumlah.style.boxShadow   = '0 0 0 3px rgba(251,146,60,0.15)';
+        btn.disabled = true;
+        btn.style.background = '#94a3b8';
+        btn.style.boxShadow  = 'none';
+        btn.style.cursor     = 'not-allowed';
+        return;
+    } else {
+        warnDesimal.classList.add('hidden'); warnDesimal.style.display = '';
+    }
+
+    if (selectedStokKeluar === null || jumlah <= 0) {
+        warn.classList.add('hidden'); warn.classList.remove('flex');
+        btn.disabled = false;
+        btn.style.background = '#f43f5e';
+        btn.style.boxShadow  = '0 4px 14px rgba(244,63,94,0.3)';
+        btn.style.cursor     = '';
+        inputJumlah.style.borderColor = '';
+        inputJumlah.style.background  = '';
+        inputJumlah.style.boxShadow   = '';
+        return;
+    }
+
+    const stok = parseFloat(selectedStokKeluar);
+    const kurang = jumlah > stok;
+
+    if (kurang) {
+        const selisih = (jumlah - stok).toLocaleString('id-ID');
+        const stokStr = stok.toLocaleString('id-ID');
+        document.getElementById('warnStokKeluarMsg').textContent =
+            'Stok tersedia hanya ' + stokStr + ' ' + selectedSatuanKeluar +
+            ', kurang ' + selisih + ' ' + selectedSatuanKeluar + '. Tambah stok terlebih dahulu.';
+        warn.classList.remove('hidden'); warn.classList.add('flex');
+        inputJumlah.style.borderColor = '#f43f5e';
+        inputJumlah.style.background  = '#fff1f2';
+        inputJumlah.style.boxShadow   = '0 0 0 3px rgba(244,63,94,0.15)';
+        btn.disabled = true;
+        btn.style.background = '#94a3b8';
+        btn.style.boxShadow  = 'none';
+        btn.style.cursor     = 'not-allowed';
+    } else {
+        warn.classList.add('hidden'); warn.classList.remove('flex');
+        inputJumlah.style.borderColor = '';
+        inputJumlah.style.background  = '';
+        inputJumlah.style.boxShadow   = '';
+        btn.disabled = false;
+        btn.style.background = '#f43f5e';
+        btn.style.boxShadow  = '0 4px 14px rgba(244,63,94,0.3)';
+        btn.style.cursor     = '';
+    }
+}
 
 const barangData  = <?= json_encode(array_column($barang_list, null, 'id_barang')) ?>;
 const kategoriData = <?= json_encode(array_column($kategori_list, null, 'id_kategori')) ?>;
@@ -623,6 +843,7 @@ function handleBarangInput(input, mode) {
     }
 }
 
+// ── Modal open/close ──────────────────────────────────────────────
 function openModal(jenis = 'masuk') {
     document.getElementById('modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -630,17 +851,25 @@ function openModal(jenis = 'masuk') {
     const today = new Date().toISOString().split('T')[0];
     const dl = document.getElementById('input-date-lama');
     const dk = document.getElementById('input-date-keluar');
-    if (dl) dl.value = today;
-    if (dk) dk.value = today;
+    if (dl) { dl.value = today; dl.readOnly = true; }
+    if (dk) { dk.value = today; dk.readOnly = true; }
 }
 function closeModal() {
     document.getElementById('modal-overlay').classList.remove('open');
     document.body.style.overflow = '';
+    // Reset state validasi
+    selectedStokKeluar   = null;
+    selectedSatuanKeluar = '';
+    const wK = document.getElementById('warnStokKeluar');
+    if (wK) { wK.classList.add('hidden'); wK.classList.remove('flex'); }
+    const wB = document.getElementById('warnHargaBaru');
+    if (wB) { wB.classList.add('hidden'); wB.classList.remove('flex'); }
 }
 function closeModalOnBg(e) {
     if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
+// ── Switch tab Masuk / Keluar ────────────────────────────────────
 function switchTab(jenis) {
     const isMasuk = jenis === 'masuk';
     const hdr = document.getElementById('modal-header');
@@ -652,6 +881,7 @@ function switchTab(jenis) {
     document.getElementById('panel-keluar').classList.toggle('hidden', isMasuk);
 }
 
+// ── Toggle Barang Lama / Barang Baru ─────────────────────────────
 function switchMasukMode(mode) {
     const isLama = mode === 'lama';
     document.getElementById('form-lama').classList.toggle('hidden', !isLama);
@@ -667,6 +897,7 @@ function switchMasukMode(mode) {
     }
 }
 
+// ── Info barang panel Masuk ──────────────────────────────────────
 function updateBarangInfoById(id) {
     const info = document.getElementById('barang-info');
     if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
@@ -685,12 +916,24 @@ function updateBarangInfoById(id) {
     info.classList.remove('hidden');
 }
 
+// ── Info barang panel Keluar ─────────────────────────────────────
 function updateBarangInfoKeluarById(id) {
     const info = document.getElementById('barang-info-keluar');
-    if (!id || !barangData[id]) { info.classList.add('hidden'); return; }
+    if (!id || !barangData[id]) {
+        info.classList.add('hidden');
+        selectedStokKeluar  = null;
+        selectedSatuanKeluar = '';
+        validasiStokKeluar();
+        return;
+    }
     const b    = barangData[id];
     const stok = parseFloat(b.stok);
     const min  = parseFloat(b.stok_min);
+
+    // Simpan stok untuk validasi jumlah keluar
+    selectedStokKeluar   = b.stok;
+    selectedSatuanKeluar = b.satuan;
+
     document.getElementById('satuan-hint-keluar').textContent = '(satuan: ' + b.satuan + ')';
     const elStok = document.getElementById('info-stok-keluar');
     let cls = 'stok-ok', text = stok.toLocaleString('id-ID') + ' ' + b.satuan;
@@ -700,6 +943,9 @@ function updateBarangInfoKeluarById(id) {
     elStok.textContent = text;
     document.getElementById('info-kategori-keluar').textContent = b.nama_kategori || '-';
     info.classList.remove('hidden');
+
+    // Re-validasi jumlah yang sudah diisi
+    validasiStokKeluar();
 }
 </script>
 

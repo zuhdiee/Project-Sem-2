@@ -3,7 +3,7 @@ session_start();
 include 'koneksi.php';
 
 if (!isset($_SESSION['id'])) {
-    header("Location: login.php"); exit;
+    header("Location: index.php"); exit;
 }
 if (!isset($_SESSION['role']) || in_array($_SESSION['role'], ['Karyawan'])) {
     header("Location: dashboard.php?pesan=akses_ditolak"); exit;
