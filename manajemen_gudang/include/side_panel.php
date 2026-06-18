@@ -5,38 +5,27 @@ $role = $_SESSION['role'] ?? '';
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
-<!-- ── Mobile Overlay Backdrop ── -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden" onclick="closeSidebar()"></div>
-
-<aside id="sidebarPanel" class="
-    fixed md:relative
-    -translate-x-full md:translate-x-0
-    transition-transform duration-300 ease-in-out
-    w-72 bg-[#1e3a8a] text-white flex flex-col p-6 h-screen shrink-0
-    rounded-r-[30px] shadow-[10px_0_30px_-5px_rgba(0,0,0,0.3)]
-    z-40
-">
+<aside class="w-72 bg-[#1e3a8a] text-white flex flex-col p-6 h-screen shrink-0 rounded-r-[30px] shadow-[10px_0_30px_-5px_rgba(0,0,0,0.3)] z-20">
+    
     <!-- Logo Section -->
     <div class="flex items-center gap-3 mb-12 px-2">
         <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 shadow-md">
             <img src="include/Logo.png" alt="Logo" class="max-w-full max-h-full object-contain">
         </div>
-        <div class="flex flex-col flex-1">
+        <div class="flex flex-col">
             <h2 class="text-lg font-bold tracking-tight leading-none text-white whitespace-nowrap">Putra Surya Agung</h2>
             <p class="text-[10px] text-blue-300 font-medium uppercase tracking-[0.2em] mt-1">Logistic System</p>
         </div>
-        <!-- Close button (mobile only) -->
-        <button onclick="closeSidebar()" class="md:hidden w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition flex-shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" stroke-linecap="round"/></svg>
-        </button>
     </div>
 
     <!-- Navigation -->
     <nav class="flex-1 overflow-y-auto pr-2">
-
+        
+        <!-- Utama Section -->
         <div class="text-blue-200/50 text-[12px] font-semibold px-4 mb-3">Utama</div>
-
-        <a href="dashboard.php"
+        
+        <!-- Dashboard -->
+        <a href="dashboard.php" 
            class="flex items-center gap-4 px-6 py-3.5 rounded-full transition-all mb-8 <?php echo ($current_page == 'dashboard.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40' : 'text-white hover:text-blue-200 hover:bg-white/5'; ?>">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -44,38 +33,54 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <span class="font-bold">Dashboard</span>
         </a>
 
+        <!-- Manajemen Stok Section -->
         <div class="text-blue-200/50 text-[12px] font-semibold px-4 mb-4 mt-2">Manajemen Stok</div>
-        <div class="space-y-4">
-
-            <a href="data_barang.php"
+        <div class="space-y-4"> <!-- Mengatur jarak agar lebih rapi -->
+            
+            <!-- Data Barang -->
+            <a href="data_barang.php" 
                class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'data_barang.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                 <span>Data Barang</span>
             </a>
 
-            <a href="kategori_barang.php"
+            <!-- Kategori Barang -->
+            <a href="kategori_barang.php" 
                class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'kategori_barang.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                 <span>Kategori Barang</span>
             </a>
 
-            <a href="transaksi_barang.php"
+            <!-- Transaksi Barang -->
+            <a href="transaksi_barang.php" 
                class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'transaksi_barang.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1 5h12m-9 0a1 1 0 102 0m6 0a1 1 0 102 0" />
                 </svg>
-                <span>Transaksi Barang</span>
+                <span>Riwayat Transaksi</span>
             </a>
         </div>
-
+        <!-- Laporan Section -->
         <?php if (in_array($role, ['Admin', 'Owner'])): ?>
         <div class="text-blue-200/50 text-[12px] font-semibold px-4 mb-4 mt-10">Laporan</div>
-        <a href="analisis_penjualan.php"
+        <a href="analisis_penjualan.php" 
            class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'analisis_penjualan.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <span>Analisis Penjualan</span>
         </a>
         <?php endif; ?>
+        <!-- Pengaturan Section — Admin only -->
+        <?php if ($role === 'Admin'): ?>
+        <div class="text-blue-200/50 text-[12px] font-semibold px-4 mb-4 mt-10">Pengaturan</div>
+        <a href="kelola_pengguna.php"
+           class="flex items-center gap-4 px-6 py-3 rounded-full transition-all <?php echo ($current_page == 'kelola_pengguna.php') ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-900/40 font-bold' : 'text-white hover:text-blue-200 hover:bg-white/5 font-medium'; ?>">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Kelola Pengguna</span>
+        </a>
+        <?php endif; ?>
+
     </nav>
 
     <div class="mt-auto pt-4 flex justify-center">
@@ -111,16 +116,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
 </div>
 
 <script>
-function openSidebar() {
-    document.getElementById('sidebarPanel').classList.remove('-translate-x-full');
-    document.getElementById('sidebarOverlay').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
-function closeSidebar() {
-    document.getElementById('sidebarPanel').classList.add('-translate-x-full');
-    document.getElementById('sidebarOverlay').classList.add('hidden');
-    document.body.style.overflow = '';
-}
 function konfirmasiLogout() {
     const m = document.getElementById('modalLogout');
     m.classList.remove('hidden');
